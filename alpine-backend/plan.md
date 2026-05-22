@@ -128,7 +128,7 @@ Create:
 ```yaml
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/kanban
+    url: jdbc:postgresql://localhost:5432/alpine
     username: postgres
     password: postgres
 
@@ -179,7 +179,7 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: kanban
+      POSTGRES_DB: alpine
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
