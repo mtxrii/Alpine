@@ -13,8 +13,8 @@ type Column = {
 
 const columns: Column[] = [
   { id: 'backlog', title: 'Backlog', accent: 'is-info' },
-  { id: 'ready', title: 'Ready', accent: 'is-link' },
-  { id: 'progress', title: 'In Progress', accent: 'is-warning' },
+  { id: 'ready', title: 'In Progress', accent: 'is-link' },
+  { id: 'progress', title: 'In Review', accent: 'is-warning' },
   { id: 'done', title: 'Done', accent: 'is-success' },
 ]
 
