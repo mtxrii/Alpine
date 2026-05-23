@@ -189,8 +189,81 @@
 }
 
 .modal-card {
+  background: #ffffff;
+  border: 1px solid #dfe5ee;
   border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
   overflow: hidden;
+}
+
+.modal-background {
+  background: rgba(23, 32, 51, 0.24);
+  backdrop-filter: blur(2px);
+}
+
+.modal-card-head,
+.modal-card-foot {
+  background: #ffffff;
+  border-color: #e6ebf2;
+  padding: 1.25rem 1.5rem;
+}
+
+.modal-card-title {
+  color: #172033;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.modal-card-body {
+  background: #ffffff;
+  color: #526071;
+  padding: 1.5rem;
+}
+
+.modal .label {
+  color: #172033;
+  font-size: 0.92rem;
+}
+
+.modal .input,
+.modal .textarea,
+.modal .select select {
+  background: #ffffff;
+  border-color: #d9e0ea;
+  border-radius: 8px;
+  box-shadow: none;
+  color: #172033;
+}
+
+.modal .input:focus,
+.modal .textarea:focus,
+.modal .select select:focus {
+  border-color: #26c6ae;
+  box-shadow: 0 0 0 0.125em rgba(38, 198, 174, 0.16);
+}
+
+.modal .delete {
+  background: #edf1f7;
+}
+
+.modal .delete::before,
+.modal .delete::after {
+  background-color: #526071;
+}
+
+.modal .button {
+  border-radius: 8px;
+}
+
+.modal .button:not(.is-primary) {
+  background: #ffffff;
+  border-color: #d9e0ea;
+  color: #526071;
+}
+
+.modal .button:not(.is-primary):hover {
+  border-color: #bdc7d5;
+  color: #172033;
 }
 
 .form-grid {
