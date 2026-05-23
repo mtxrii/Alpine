@@ -1,8 +1,8 @@
-package com.mtxrii.wikiforge.alpinebackend.column;
+package com.mtxrii.wikiforge.alpinebackend.service;
 
-import static com.mtxrii.wikiforge.alpinebackend.column.ColumnController.ColumnPatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.column.ColumnController.ColumnRequest;
-import static com.mtxrii.wikiforge.alpinebackend.column.ColumnController.ReorderColumnsRequest;
+import static com.mtxrii.wikiforge.alpinebackend.api.controller.ColumnController.ColumnPatchRequest;
+import static com.mtxrii.wikiforge.alpinebackend.api.controller.ColumnController.ColumnRequest;
+import static com.mtxrii.wikiforge.alpinebackend.api.controller.ColumnController.ReorderColumnsRequest;
 
 import java.util.Map;
 import java.util.UUID;

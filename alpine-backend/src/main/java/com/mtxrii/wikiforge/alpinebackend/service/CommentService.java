@@ -1,8 +1,8 @@
-package com.mtxrii.wikiforge.alpinebackend.comment;
+package com.mtxrii.wikiforge.alpinebackend.service;
 
-import static com.mtxrii.wikiforge.alpinebackend.comment.CommentController.CommentPatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.comment.CommentController.CommentRequest;
-import static com.mtxrii.wikiforge.alpinebackend.comment.CommentController.CommentResponse;
+import static com.mtxrii.wikiforge.alpinebackend.api.controller.CommentController.CommentPatchRequest;
+import static com.mtxrii.wikiforge.alpinebackend.api.controller.CommentController.CommentRequest;
+import static com.mtxrii.wikiforge.alpinebackend.api.controller.CommentController.CommentResponse;
 
 import java.util.Map;
 import java.util.UUID;

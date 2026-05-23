@@ -1,6 +1,6 @@
-package com.mtxrii.wikiforge.alpinebackend.activity;
+package com.mtxrii.wikiforge.alpinebackend.service;
 
-import static com.mtxrii.wikiforge.alpinebackend.activity.ActivityController.ActivityResponse;
+import static com.mtxrii.wikiforge.alpinebackend.api.controller.ActivityController.ActivityResponse;
 
 import java.util.Map;
 import java.util.UUID;
