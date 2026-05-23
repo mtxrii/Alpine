@@ -26,6 +26,8 @@ const emptyForm = {
   status: 'backlog' as TicketStatus,
 }
 
+const priorityOptions: TicketPriority[] = ['Low', 'Medium', 'High']
+
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>(starterTickets)
   const [nextTicketNumber, setNextTicketNumber] = useState(106)
@@ -75,10 +77,6 @@ function App() {
     setDescriptionDraft('')
   }
 
-  function getColumnTitle(status: TicketStatus) {
-    return columns.find((column) => column.id === status)?.title ?? status
-  }
-
   function openTicketDetails(ticket: Ticket) {
     setSelectedTicket(ticket)
     setIsEditingDescription(false)
@@ -114,6 +112,21 @@ function App() {
     )
     setSelectedTicket(updatedTicket)
     setIsEditingDescription(false)
+  }
+
+  function updateSelectedTicket(updates: Partial<Ticket>) {
+    if (!selectedTicket) {
+      return
+    }
+
+    const updatedTicket = { ...selectedTicket, ...updates }
+
+    setTickets((currentTickets) =>
+      currentTickets.map((ticket) =>
+        ticket.id === selectedTicket.id ? updatedTicket : ticket,
+      ),
+    )
+    setSelectedTicket(updatedTicket)
   }
 
   function createTicket(event: FormEvent<HTMLFormElement>) {
@@ -484,15 +497,59 @@ function App() {
                 <div className="detail-grid">
                   <div>
                     <p className="detail-label">Assignee</p>
-                    <p>{selectedTicket.assignee}</p>
+                    <div className="select is-fullwidth detail-select">
+                      <select
+                        aria-label="Ticket assignee"
+                        onChange={(event) =>
+                          updateSelectedTicket({ assignee: event.target.value })
+                        }
+                        value={selectedTicket.assignee}
+                      >
+                        {mockUsers.map((user) => (
+                          <option key={user.id} value={user.name}>
+                            {user.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                   <div>
                     <p className="detail-label">Priority</p>
-                    <p>{selectedTicket.priority}</p>
+                    <div className="select is-fullwidth detail-select">
+                      <select
+                        aria-label="Ticket priority"
+                        onChange={(event) =>
+                          updateSelectedTicket({
+                            priority: event.target.value as TicketPriority,
+                          })
+                        }
+                        value={selectedTicket.priority}
+                      >
+                        {priorityOptions.map((priority) => (
+                          <option key={priority}>{priority}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                   <div>
                     <p className="detail-label">Column</p>
-                    <p>{getColumnTitle(selectedTicket.status)}</p>
+                    <div className="select is-fullwidth detail-select">
+                      <select
+                        aria-label="Ticket column"
+                        onChange={(event) =>
+                          updateSelectedTicket({
+                            status: event.target.value as TicketStatus,
+                          })
+                        }
+                        value={selectedTicket.status}
+                      >
+                        {columns.map((column) => (
+                          <option key={column.id} value={column.id}>
+                            {column.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </section>

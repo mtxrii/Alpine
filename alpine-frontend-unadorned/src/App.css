@@ -362,6 +362,10 @@
   margin: 0;
 }
 
+.detail-select select {
+  font-weight: 700;
+}
+
 .form-grid {
   display: grid;
   gap: 1rem;
