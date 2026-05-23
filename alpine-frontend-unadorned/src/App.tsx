@@ -1,18 +1,9 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import { starterTickets } from './mock/starterTickets'
+import { mockUsers } from './mock/users'
+import type { Ticket, TicketPriority, TicketStatus } from './types'
 import './App.css'
-
-type TicketStatus = 'backlog' | 'ready' | 'progress' | 'done'
-type TicketPriority = 'Low' | 'Medium' | 'High'
-
-type Ticket = {
-  id: string
-  title: string
-  description: string
-  assignee: string
-  priority: TicketPriority
-  status: TicketStatus
-}
 
 type Column = {
   id: TicketStatus
@@ -27,53 +18,10 @@ const columns: Column[] = [
   { id: 'done', title: 'Done', accent: 'is-success' },
 ]
 
-const starterTickets: Ticket[] = [
-  {
-    id: 'ticket-101',
-    title: 'Map ticket model',
-    description: 'Define fields the backend will eventually persist.',
-    assignee: 'Maya',
-    priority: 'High',
-    status: 'backlog',
-  },
-  {
-    id: 'ticket-102',
-    title: 'Draft empty states',
-    description: 'Show useful guidance when a column has no tickets.',
-    assignee: 'Leo',
-    priority: 'Medium',
-    status: 'backlog',
-  },
-  {
-    id: 'ticket-103',
-    title: 'Review swimlane labels',
-    description: 'Make sure the team language matches the workflow.',
-    assignee: 'Priya',
-    priority: 'Low',
-    status: 'ready',
-  },
-  {
-    id: 'ticket-104',
-    title: 'Build drag interactions',
-    description: 'Move cards across lanes and update local state.',
-    assignee: 'Ethan',
-    priority: 'High',
-    status: 'progress',
-  },
-  {
-    id: 'ticket-105',
-    title: 'Create seed tickets',
-    description: 'Add realistic sample work for first-run demos.',
-    assignee: 'Ari',
-    priority: 'Medium',
-    status: 'done',
-  },
-]
-
 const emptyForm = {
   title: '',
   description: '',
-  assignee: '',
+  assignee: mockUsers[0]?.name ?? '',
   priority: 'Medium' as TicketPriority,
   status: 'backlog' as TicketStatus,
 }
@@ -367,19 +315,25 @@ function App() {
                     Assignee
                   </label>
                   <div className="control">
-                    <input
-                      className="input"
-                      id="ticket-assignee"
-                      onChange={(event) =>
-                        setForm((currentForm) => ({
-                          ...currentForm,
-                          assignee: event.target.value,
-                        }))
-                      }
-                      required
-                      type="text"
-                      value={form.assignee}
-                    />
+                    <div className="select is-fullwidth">
+                      <select
+                        id="ticket-assignee"
+                        onChange={(event) =>
+                          setForm((currentForm) => ({
+                            ...currentForm,
+                            assignee: event.target.value,
+                          }))
+                        }
+                        required
+                        value={form.assignee}
+                      >
+                        {mockUsers.map((user) => (
+                          <option key={user.id} value={user.name}>
+                            {user.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
