@@ -1,8 +1,9 @@
-package com.mtxrii.wikiforge.alpinebackend.board;
+package com.mtxrii.wikiforge.alpinebackend.api.controller;
 
 import java.util.List;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.service.BoardService;
 import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.BoardResponse;
 import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.ColumnResponse;
 import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.LabelResponse;
