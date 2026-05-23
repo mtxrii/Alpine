@@ -107,7 +107,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  min-height: 166px;
+  min-height: 116px;
   padding: 1rem;
   transition:
     box-shadow 160ms ease,
@@ -126,6 +126,14 @@
 
 .ticket-card.is-dragging {
   opacity: 0.48;
+}
+
+.ticket-card:focus-visible {
+  border-color: #26c6ae;
+  box-shadow:
+    0 0 0 0.125em rgba(38, 198, 174, 0.18),
+    0 16px 28px rgba(15, 23, 42, 0.11);
+  outline: none;
 }
 
 .ticket-card-header {
@@ -208,10 +216,24 @@
   padding: 1.25rem 1.5rem;
 }
 
+.modal-card-head {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
 .modal-card-title {
   color: #172033;
   font-size: 1.35rem;
   font-weight: 700;
+}
+
+.modal-card-subtitle {
+  color: #697386;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0.15rem 0 0;
 }
 
 .modal-card-body {
@@ -266,6 +288,53 @@
   color: #172033;
 }
 
+.ticket-detail-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.ticket-detail-header .title {
+  color: #172033;
+  line-height: 1.2;
+  margin-bottom: 0;
+}
+
+.ticket-detail-section {
+  border-bottom: 1px solid #e6ebf2;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+}
+
+.detail-label {
+  color: #697386;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.ticket-detail-description {
+  color: #526071;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.detail-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.detail-grid p:not(.detail-label) {
+  color: #172033;
+  font-weight: 700;
+  margin: 0;
+}
+
 .form-grid {
   display: grid;
   gap: 1rem;
@@ -285,6 +354,7 @@
   }
 
   .kanban-board,
+  .detail-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }

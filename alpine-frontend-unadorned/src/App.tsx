@@ -86,6 +86,7 @@ function App() {
     null,
   )
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [form, setForm] = useState(emptyForm)
 
   const ticketsByColumn = useMemo(
@@ -116,6 +117,14 @@ function App() {
   function closeModal() {
     setIsModalOpen(false)
     setForm(emptyForm)
+  }
+
+  function closeTicketDetails() {
+    setSelectedTicket(null)
+  }
+
+  function getColumnTitle(status: TicketStatus) {
+    return columns.find((column) => column.id === status)?.title ?? status
   }
 
   function createTicket(event: FormEvent<HTMLFormElement>) {
@@ -206,6 +215,7 @@ function App() {
                       className={`ticket-card ${draggedTicketId === ticket.id ? 'is-dragging' : ''}`}
                       draggable
                       key={ticket.id}
+                      onClick={() => setSelectedTicket(ticket)}
                       onDragStart={(event) => {
                         event.dataTransfer.effectAllowed = 'move'
                         event.dataTransfer.setData('text/plain', ticket.id)
@@ -215,6 +225,14 @@ function App() {
                         setDraggedTicketId(null)
                         setActiveDropColumn(null)
                       }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          setSelectedTicket(ticket)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                     >
                       <div className="ticket-card-header">
                         <h2 className="title is-6">{ticket.title}</h2>
@@ -224,7 +242,6 @@ function App() {
                           {ticket.priority}
                         </span>
                       </div>
-                      <p>{ticket.description}</p>
                       <footer>
                         <span>{ticket.assignee}</span>
                         <span>{ticket.id.replace('ticket-', '#')}</span>
@@ -386,6 +403,79 @@ function App() {
               </button>
             </footer>
           </form>
+        </div>
+      </div>
+
+      <div className={`modal ${selectedTicket ? 'is-active' : ''}`}>
+        <div
+          className="modal-background"
+          onClick={closeTicketDetails}
+          role="presentation"
+        />
+        <div className="modal-card">
+          <header className="modal-card-head">
+            <div>
+              <p className="modal-card-title">Ticket details</p>
+              {selectedTicket && (
+                <p className="modal-card-subtitle">
+                  {selectedTicket.id.replace('ticket-', '#')}
+                </p>
+              )}
+            </div>
+            <button
+              aria-label="close"
+              className="delete"
+              onClick={closeTicketDetails}
+              type="button"
+            />
+          </header>
+
+          {selectedTicket && (
+            <>
+              <section className="modal-card-body">
+                <div className="ticket-detail-header">
+                  <h2 className="title is-4">{selectedTicket.title}</h2>
+                  <span
+                    className={`tag priority-${selectedTicket.priority.toLowerCase()}`}
+                  >
+                    {selectedTicket.priority}
+                  </span>
+                </div>
+
+                <div className="ticket-detail-section">
+                  <p className="detail-label">Description</p>
+                  <p className="ticket-detail-description">
+                    {selectedTicket.description}
+                  </p>
+                </div>
+
+                <div className="detail-grid">
+                  <div>
+                    <p className="detail-label">Assignee</p>
+                    <p>{selectedTicket.assignee}</p>
+                  </div>
+                  <div>
+                    <p className="detail-label">Priority</p>
+                    <p>{selectedTicket.priority}</p>
+                  </div>
+                  <div>
+                    <p className="detail-label">Column</p>
+                    <p>{getColumnTitle(selectedTicket.status)}</p>
+                  </div>
+                </div>
+              </section>
+
+              <footer className="modal-card-foot">
+                <button
+                  className="button is-primary"
+                  onClick={closeTicketDetails}
+                  type="button"
+                >
+                  Done
+                </button>
+              </footer>
+            </>
+          )}
         </div>
       </div>
     </main>
