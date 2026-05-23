@@ -318,9 +318,36 @@
 }
 
 .ticket-detail-description {
+  background: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 8px;
   color: #526071;
+  cursor: text;
+  display: block;
+  font: inherit;
   line-height: 1.55;
   margin: 0;
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  width: 100%;
+}
+
+.ticket-detail-description:hover,
+.ticket-detail-description:focus-visible {
+  background: #f8fafc;
+  border-color: #d9e0ea;
+  outline: none;
+}
+
+.description-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.description-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .detail-grid {

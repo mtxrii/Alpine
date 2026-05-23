@@ -87,6 +87,8 @@ function App() {
   )
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [isEditingDescription, setIsEditingDescription] = useState(false)
+  const [descriptionDraft, setDescriptionDraft] = useState('')
   const [form, setForm] = useState(emptyForm)
 
   const ticketsByColumn = useMemo(
@@ -121,10 +123,49 @@ function App() {
 
   function closeTicketDetails() {
     setSelectedTicket(null)
+    setIsEditingDescription(false)
+    setDescriptionDraft('')
   }
 
   function getColumnTitle(status: TicketStatus) {
     return columns.find((column) => column.id === status)?.title ?? status
+  }
+
+  function openTicketDetails(ticket: Ticket) {
+    setSelectedTicket(ticket)
+    setIsEditingDescription(false)
+    setDescriptionDraft(ticket.description)
+  }
+
+  function startEditingDescription() {
+    if (!selectedTicket) {
+      return
+    }
+
+    setDescriptionDraft(selectedTicket.description)
+    setIsEditingDescription(true)
+  }
+
+  function saveDescription() {
+    if (!selectedTicket) {
+      return
+    }
+
+    const description = descriptionDraft.trim()
+
+    if (!description) {
+      return
+    }
+
+    const updatedTicket = { ...selectedTicket, description }
+
+    setTickets((currentTickets) =>
+      currentTickets.map((ticket) =>
+        ticket.id === selectedTicket.id ? updatedTicket : ticket,
+      ),
+    )
+    setSelectedTicket(updatedTicket)
+    setIsEditingDescription(false)
   }
 
   function createTicket(event: FormEvent<HTMLFormElement>) {
@@ -215,7 +256,7 @@ function App() {
                       className={`ticket-card ${draggedTicketId === ticket.id ? 'is-dragging' : ''}`}
                       draggable
                       key={ticket.id}
-                      onClick={() => setSelectedTicket(ticket)}
+                      onClick={() => openTicketDetails(ticket)}
                       onDragStart={(event) => {
                         event.dataTransfer.effectAllowed = 'move'
                         event.dataTransfer.setData('text/plain', ticket.id)
@@ -228,7 +269,7 @@ function App() {
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault()
-                          setSelectedTicket(ticket)
+                          openTicketDetails(ticket)
                         }
                       }}
                       role="button"
@@ -444,9 +485,46 @@ function App() {
 
                 <div className="ticket-detail-section">
                   <p className="detail-label">Description</p>
-                  <p className="ticket-detail-description">
-                    {selectedTicket.description}
-                  </p>
+                  {isEditingDescription ? (
+                    <div className="description-editor">
+                      <textarea
+                        aria-label="Ticket description"
+                        className="textarea"
+                        onChange={(event) =>
+                          setDescriptionDraft(event.target.value)
+                        }
+                        rows={4}
+                        value={descriptionDraft}
+                      />
+                      <div className="description-actions">
+                        <button
+                          className="button is-primary"
+                          onClick={saveDescription}
+                          type="button"
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="button"
+                          onClick={() => {
+                            setDescriptionDraft(selectedTicket.description)
+                            setIsEditingDescription(false)
+                          }}
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      className="ticket-detail-description"
+                      onClick={startEditingDescription}
+                      type="button"
+                    >
+                      {selectedTicket.description}
+                    </button>
+                  )}
                 </div>
 
                 <div className="detail-grid">
