@@ -27,7 +27,7 @@ public class AuthService extends JdbcSupport {
         super(jdbc);
     }
 
-    UserResponse register(RegisterRequest request) {
+    public UserResponse register(RegisterRequest request) {
         UUID id = insertReturningId("""
                 INSERT INTO users (email, name, avatar_url)
                 VALUES (:email, :name, :avatarUrl)
@@ -36,7 +36,7 @@ public class AuthService extends JdbcSupport {
         return getUser(id);
     }
 
-    UserResponse login(LoginRequest request) {
+    public UserResponse login(LoginRequest request) {
         return optional("SELECT * FROM users WHERE email = :email", Map.of("email", request.email()), userMapper)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email"));
     }
