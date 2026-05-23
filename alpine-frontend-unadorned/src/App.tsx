@@ -37,6 +37,7 @@ function App() {
   )
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [ticketDraft, setTicketDraft] = useState<Ticket | null>(null)
   const [isEditingDescription, setIsEditingDescription] = useState(false)
   const [descriptionDraft, setDescriptionDraft] = useState('')
   const [form, setForm] = useState(emptyForm)
@@ -73,27 +74,29 @@ function App() {
 
   function closeTicketDetails() {
     setSelectedTicket(null)
+    setTicketDraft(null)
     setIsEditingDescription(false)
     setDescriptionDraft('')
   }
 
   function openTicketDetails(ticket: Ticket) {
     setSelectedTicket(ticket)
+    setTicketDraft(ticket)
     setIsEditingDescription(false)
     setDescriptionDraft(ticket.description)
   }
 
   function startEditingDescription() {
-    if (!selectedTicket) {
+    if (!ticketDraft) {
       return
     }
 
-    setDescriptionDraft(selectedTicket.description)
+    setDescriptionDraft(ticketDraft.description)
     setIsEditingDescription(true)
   }
 
   function saveDescription() {
-    if (!selectedTicket) {
+    if (!ticketDraft) {
       return
     }
 
@@ -103,30 +106,29 @@ function App() {
       return
     }
 
-    const updatedTicket = { ...selectedTicket, description }
-
-    setTickets((currentTickets) =>
-      currentTickets.map((ticket) =>
-        ticket.id === selectedTicket.id ? updatedTicket : ticket,
-      ),
-    )
-    setSelectedTicket(updatedTicket)
+    setTicketDraft({ ...ticketDraft, description })
     setIsEditingDescription(false)
   }
 
-  function updateSelectedTicket(updates: Partial<Ticket>) {
-    if (!selectedTicket) {
+  function updateTicketDraft(updates: Partial<Ticket>) {
+    if (!ticketDraft) {
       return
     }
 
-    const updatedTicket = { ...selectedTicket, ...updates }
+    setTicketDraft({ ...ticketDraft, ...updates })
+  }
+
+  function saveTicketDetails() {
+    if (!selectedTicket || !ticketDraft) {
+      return
+    }
 
     setTickets((currentTickets) =>
       currentTickets.map((ticket) =>
-        ticket.id === selectedTicket.id ? updatedTicket : ticket,
+        ticket.id === selectedTicket.id ? ticketDraft : ticket,
       ),
     )
-    setSelectedTicket(updatedTicket)
+    closeTicketDetails()
   }
 
   function createTicket(event: FormEvent<HTMLFormElement>) {
@@ -438,15 +440,15 @@ function App() {
             />
           </header>
 
-          {selectedTicket && (
+          {selectedTicket && ticketDraft && (
             <>
               <section className="modal-card-body">
                 <div className="ticket-detail-header">
-                  <h2 className="title is-4">{selectedTicket.title}</h2>
+                  <h2 className="title is-4">{ticketDraft.title}</h2>
                   <span
-                    className={`tag priority-${selectedTicket.priority.toLowerCase()}`}
+                    className={`tag priority-${ticketDraft.priority.toLowerCase()}`}
                   >
-                    {selectedTicket.priority}
+                    {ticketDraft.priority}
                   </span>
                 </div>
 
@@ -471,12 +473,12 @@ function App() {
                         >
                           Save
                         </button>
-                        <button
-                          className="button"
-                          onClick={() => {
-                            setDescriptionDraft(selectedTicket.description)
-                            setIsEditingDescription(false)
-                          }}
+	                        <button
+	                          className="button"
+	                          onClick={() => {
+	                            setDescriptionDraft(ticketDraft.description)
+	                            setIsEditingDescription(false)
+	                          }}
                           type="button"
                         >
                           Cancel
@@ -488,9 +490,9 @@ function App() {
                       className="ticket-detail-description"
                       onClick={startEditingDescription}
                       type="button"
-                    >
-                      {selectedTicket.description}
-                    </button>
+	                    >
+	                      {ticketDraft.description}
+	                    </button>
                   )}
                 </div>
 
@@ -499,11 +501,11 @@ function App() {
                     <p className="detail-label">Assignee</p>
                     <div className="select is-fullwidth detail-select">
                       <select
-                        aria-label="Ticket assignee"
-                        onChange={(event) =>
-                          updateSelectedTicket({ assignee: event.target.value })
-                        }
-                        value={selectedTicket.assignee}
+	                        aria-label="Ticket assignee"
+	                        onChange={(event) =>
+	                          updateTicketDraft({ assignee: event.target.value })
+	                        }
+	                        value={ticketDraft.assignee}
                       >
                         {mockUsers.map((user) => (
                           <option key={user.id} value={user.name}>
@@ -517,13 +519,13 @@ function App() {
                     <p className="detail-label">Priority</p>
                     <div className="select is-fullwidth detail-select">
                       <select
-                        aria-label="Ticket priority"
-                        onChange={(event) =>
-                          updateSelectedTicket({
-                            priority: event.target.value as TicketPriority,
-                          })
-                        }
-                        value={selectedTicket.priority}
+	                        aria-label="Ticket priority"
+	                        onChange={(event) =>
+	                          updateTicketDraft({
+	                            priority: event.target.value as TicketPriority,
+	                          })
+	                        }
+	                        value={ticketDraft.priority}
                       >
                         {priorityOptions.map((priority) => (
                           <option key={priority}>{priority}</option>
@@ -535,13 +537,13 @@ function App() {
                     <p className="detail-label">Column</p>
                     <div className="select is-fullwidth detail-select">
                       <select
-                        aria-label="Ticket column"
-                        onChange={(event) =>
-                          updateSelectedTicket({
-                            status: event.target.value as TicketStatus,
-                          })
-                        }
-                        value={selectedTicket.status}
+	                        aria-label="Ticket column"
+	                        onChange={(event) =>
+	                          updateTicketDraft({
+	                            status: event.target.value as TicketStatus,
+	                          })
+	                        }
+	                        value={ticketDraft.status}
                       >
                         {columns.map((column) => (
                           <option key={column.id} value={column.id}>
@@ -556,9 +558,9 @@ function App() {
 
               <footer className="modal-card-foot">
                 <button
-                  className="button is-primary"
-                  onClick={closeTicketDetails}
-                  type="button"
+	                  className="button is-primary"
+	                  onClick={saveTicketDetails}
+	                  type="button"
                 >
                   Done
                 </button>
