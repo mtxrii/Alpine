@@ -286,15 +286,15 @@
 }
 
 .profile-pic {
-  align-items: center;
   background: #26c6ae;
   border-radius: 50%;
   color: #ffffff;
-  display: flex;
+  display: grid;
   font-size: 0.65rem;
   font-weight: 700;
   height: 1.5rem;
-  justify-content: center;
+  line-height: 1;
+  place-items: center;
   width: 1.5rem;
 }
 
