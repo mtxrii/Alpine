@@ -28,6 +28,14 @@ const emptyForm = {
 
 const priorityOptions: TicketPriority[] = ['Low', 'Medium', 'High']
 
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('')
+    .slice(0, 2)
+}
+
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>(starterTickets)
   const [nextTicketNumber, setNextTicketNumber] = useState(106)
@@ -241,7 +249,10 @@ function App() {
                       </span>
                     </div>
                     <footer>
-                      <span>{ticket.assignee}</span>
+                      <div className="assignee-info">
+                        <div className="profile-pic">{getInitials(ticket.assignee)}</div>
+                        <span>{ticket.assignee}</span>
+                      </div>
                       <span>{ticket.id.replace('ticket-', '#')}</span>
                     </footer>
                   </article>

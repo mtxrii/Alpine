@@ -279,6 +279,25 @@
   margin-top: auto;
 }
 
+.assignee-info {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profile-pic {
+  align-items: center;
+  background: #26c6ae;
+  border-radius: 50%;
+  color: #ffffff;
+  display: flex;
+  font-size: 0.65rem;
+  font-weight: 700;
+  height: 1.5rem;
+  justify-content: center;
+  width: 1.5rem;
+}
+
 .priority-low {
   background: #eef8f3;
   color: #257953;
