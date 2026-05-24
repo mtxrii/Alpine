@@ -28,12 +28,30 @@ const emptyForm = {
 
 const priorityOptions: TicketPriority[] = ['Low', 'Medium', 'High']
 
+const profileColors = [
+  '#26c6ae', // teal
+  '#3b82f6', // blue
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#06b6d4', // cyan
+  '#6366f1', // indigo
+]
+
 function getInitials(name: string): string {
   return name
     .split(' ')
     .map((part) => part.charAt(0).toUpperCase())
     .join('')
     .slice(0, 2)
+}
+
+function getProfileColor(name: string): string {
+  const firstLetter = name.charAt(0).toUpperCase()
+  const letterIndex = firstLetter.charCodeAt(0) - 'A'.charCodeAt(0)
+  const colorIndex = Math.max(0, letterIndex) % profileColors.length
+  return profileColors[colorIndex]
 }
 
 function App() {
@@ -250,7 +268,7 @@ function App() {
                     </div>
                     <footer>
                       <div className="assignee-info">
-                        <div className="profile-pic">{getInitials(ticket.assignee)}</div>
+                        <div className="profile-pic" style={{ backgroundColor: getProfileColor(ticket.assignee) }}>{getInitials(ticket.assignee)}</div>
                         <span>{ticket.assignee}</span>
                       </div>
                       <span>{ticket.id.replace('ticket-', '#')}</span>
