@@ -41,6 +41,8 @@ function App() {
   const [descriptionDraft, setDescriptionDraft] = useState('')
   const [form, setForm] = useState(emptyForm)
 
+  const ticketLabel = (count: number) => `${count} ${count === 1 ? 'ticket' : 'tickets'}`
+
   function getTicketsByColumn(boardTickets: Ticket[]) {
     return columns.reduce<Record<TicketStatus, Ticket[]>>(
       (groupedTickets, column) => ({
@@ -201,7 +203,7 @@ function App() {
                   <span className={`tag ${column.accent} is-light`}>
                     {column.title}
                   </span>
-                  <p>{columnTickets.length} tickets</p>
+                  <p>{ticketLabel(columnTickets.length)}</p>
                 </div>
               </header>
 
@@ -306,7 +308,7 @@ function App() {
                       <h2>{user.name}</h2>
                       <p>{user.role}</p>
                     </div>
-                    <span>{userTickets.length} tickets</span>
+                    <span>{ticketLabel(userTickets.length)}</span>
                   </div>
                   {renderBoard(userTickets, user.id, user.name)}
                 </section>
