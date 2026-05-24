@@ -37,6 +37,18 @@ const profileColors = [
   '#10b981', // emerald
   '#06b6d4', // cyan
   '#6366f1', // indigo
+  '#f43f5e', // rose
+  '#14b8a6', // turquoise
+  '#7c3aed', // violet
+  '#d946ef', // fuchsia
+  '#059669', // green
+  '#0891b2', // sky
+  '#e11d48', // crimson
+  '#7c2d12', // orange-brown
+  '#4f46e5', // blue-indigo
+  '#64748b', // slate
+  '#6d28d9', // blue-purple
+  '#be123c', // red-rose
 ]
 
 function getInitials(name: string): string {
