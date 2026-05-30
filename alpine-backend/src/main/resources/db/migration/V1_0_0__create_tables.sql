@@ -3,16 +3,16 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     avatar_url TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE workspaces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     owner_id UUID NOT NULL REFERENCES users(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE workspace_members (
@@ -21,6 +21,8 @@ CREATE TABLE workspace_members (
     role TEXT NOT NULL CHECK (
             role IN ('owner', 'admin', 'member')
         ),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (workspace_id, user_id)
 );
 
@@ -30,8 +32,8 @@ CREATE TABLE boards (
     name TEXT NOT NULL,
     description TEXT,
     created_by UUID NOT NULL REFERENCES users(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE columns (
@@ -40,8 +42,8 @@ CREATE TABLE columns (
     name TEXT NOT NULL,
     position INTEGER NOT NULL,
     color TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE tickets (
@@ -58,28 +60,32 @@ CREATE TABLE tickets (
     created_by UUID NOT NULL REFERENCES users(id),
     due_date TIMESTAMPTZ,
     archived BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 
 CREATE TABLE ticket_assignees (
     ticket_id UUID REFERENCES tickets(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY(ticket_id, user_id)
 );
-
 
 CREATE TABLE labels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    color TEXT NOT NULL
+    color TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE ticket_labels (
     ticket_id UUID REFERENCES tickets(id) ON DELETE CASCADE,
     label_id UUID REFERENCES labels(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY(ticket_id, label_id)
 );
 
@@ -88,8 +94,8 @@ CREATE TABLE comments (
     ticket_id UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
     author_id UUID NOT NULL REFERENCES users(id),
     body TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE activity_logs (
@@ -99,5 +105,5 @@ CREATE TABLE activity_logs (
     user_id UUID NOT NULL REFERENCES users(id),
     action TEXT NOT NULL,
     metadata JSONB,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
