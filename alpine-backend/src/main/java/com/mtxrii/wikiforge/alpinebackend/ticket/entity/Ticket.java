@@ -1,7 +1,7 @@
 package com.mtxrii.wikiforge.alpinebackend.ticket.entity;
 
 import com.mtxrii.wikiforge.alpinebackend.board.entity.Board;
-import com.mtxrii.wikiforge.alpinebackend.column.entity.Column;
+import com.mtxrii.wikiforge.alpinebackend.column.entity.BoardColumn;
 import com.mtxrii.wikiforge.alpinebackend.common.entity.BaseEntity;
 import com.mtxrii.wikiforge.alpinebackend.user.entity.User;
 import jakarta.persistence.*;
@@ -22,7 +22,7 @@ public class Ticket extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "column_id", nullable = false)
-    private Column column;
+    private BoardColumn column;
 
     @Column(nullable = false)
     private String title;
@@ -44,4 +44,13 @@ public class Ticket extends BaseEntity {
     private Instant dueDate;
 
     private Boolean archived = false;
+
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<com.mtxrii.wikiforge.alpinebackend.ticket.entity.TicketAssignee> assignees;
+
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<com.mtxrii.wikiforge.alpinebackend.ticket.entity.TicketLabel> labels;
+
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<com.mtxrii.wikiforge.alpinebackend.comment.entity.Comment> comments;
 }
