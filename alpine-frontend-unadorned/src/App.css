@@ -5,6 +5,69 @@
     #f4f7fb;
 }
 
+.app-shell.dark {
+  background:
+    linear-gradient(180deg, #1e293b, #0f172a),
+    #0f172a;
+  color: #f8fafc;
+}
+
+.app-shell.dark .board-header .title {
+  color: #f8fafc;
+}
+
+.app-shell.dark .board-header .subtitle,
+.app-shell.dark .split-toggle,
+.app-shell.dark .eyebrow {
+  color: #cbd5e1;
+}
+
+.app-shell.dark .kanban-column {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.app-shell.dark .column-header {
+  border-bottom-color: #334155;
+}
+
+.app-shell.dark .column-header p {
+  color: #94a3b8;
+}
+
+.app-shell.dark .ticket-card {
+  background: #334155;
+  border-color: #475569;
+  box-shadow: none;
+}
+
+.app-shell.dark .ticket-card .title {
+  color: #f1f5f9;
+}
+
+.app-shell.dark .ticket-card p,
+.app-shell.dark .ticket-card footer {
+  color: #cbd5e1;
+}
+
+.app-shell.dark .user-divider {
+  border-top-color: #334155;
+}
+
+.app-shell.dark .user-divider h2 {
+  color: #f8fafc;
+}
+
+.app-shell.dark .user-divider p,
+.app-shell.dark .user-divider span {
+  color: #94a3b8;
+}
+
+.app-shell.dark .empty-column {
+  border-color: #475569;
+  color: #94a3b8;
+}
+
 .board-header {
   align-items: center;
   display: flex;

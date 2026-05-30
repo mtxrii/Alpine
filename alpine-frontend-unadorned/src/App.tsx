@@ -73,6 +73,7 @@ function App() {
   const [activeDropTarget, setActiveDropTarget] = useState<string | null>(null)
   const [splitByUser, setSplitByUser] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [ticketDraft, setTicketDraft] = useState<Ticket | null>(null)
   const [isEditingDescription, setIsEditingDescription] = useState(false)
@@ -300,7 +301,7 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${isDarkMode ? 'dark' : ''}`}>
       <section className="section board-header">
         <div>
           <p className="eyebrow">Product operations</p>
@@ -311,6 +312,16 @@ function App() {
         </div>
 
         <div className="board-actions">
+          <button
+            className="button is-outlined is-rounded"
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            style={{ width: '2.5rem', height: '2.5rem', padding: 0, background: isDarkMode ? '#fff2bf' : '#2c3e50' }}
+            type="button"
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
+
           <label className="split-toggle">
             <span>Split by user</span>
             <input
