@@ -1,10 +1,10 @@
-package com.mtxrii.wikiforge.alpinebackend.api.controller;
+package com.mtxrii.wikiforge.alpinebackend.comment;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import com.mtxrii.wikiforge.alpinebackend.service.CommentService;
+import com.mtxrii.wikiforge.alpinebackend.comment.CommentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;

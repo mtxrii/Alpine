@@ -1,9 +1,9 @@
-package com.mtxrii.wikiforge.alpinebackend.api.controller;
+package com.mtxrii.wikiforge.alpinebackend.column;
 
 import java.util.List;
 import java.util.UUID;
 
-import com.mtxrii.wikiforge.alpinebackend.service.ColumnService;
+import com.mtxrii.wikiforge.alpinebackend.column.ColumnService;
 import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.ColumnResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;

@@ -1,9 +1,9 @@
-package com.mtxrii.wikiforge.alpinebackend.api.controller;
+package com.mtxrii.wikiforge.alpinebackend.auth;
 
 import java.util.Map;
 import java.util.UUID;
 
-import com.mtxrii.wikiforge.alpinebackend.service.AuthService;
+import com.mtxrii.wikiforge.alpinebackend.auth.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

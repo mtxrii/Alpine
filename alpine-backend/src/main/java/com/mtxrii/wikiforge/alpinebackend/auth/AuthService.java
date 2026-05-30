@@ -1,8 +1,8 @@
-package com.mtxrii.wikiforge.alpinebackend.service;
+package com.mtxrii.wikiforge.alpinebackend.auth;
 
-import static com.mtxrii.wikiforge.alpinebackend.api.controller.AuthController.LoginRequest;
-import static com.mtxrii.wikiforge.alpinebackend.api.controller.AuthController.RegisterRequest;
-import static com.mtxrii.wikiforge.alpinebackend.api.controller.AuthController.UserResponse;
+import static com.mtxrii.wikiforge.alpinebackend.auth.AuthController.LoginRequest;
+import static com.mtxrii.wikiforge.alpinebackend.auth.AuthController.RegisterRequest;
+import static com.mtxrii.wikiforge.alpinebackend.auth.AuthController.UserResponse;
 
 import java.util.Map;
 import java.util.UUID;

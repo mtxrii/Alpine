@@ -1,13 +1,14 @@
-package com.mtxrii.wikiforge.alpinebackend.service;
+package com.mtxrii.wikiforge.alpinebackend.board;
 
-import static com.mtxrii.wikiforge.alpinebackend.api.controller.BoardController.BoardFullResponse;
-import static com.mtxrii.wikiforge.alpinebackend.api.controller.BoardController.BoardMemberResponse;
-import static com.mtxrii.wikiforge.alpinebackend.api.controller.BoardController.BoardPatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.api.controller.BoardController.BoardRequest;
+import static com.mtxrii.wikiforge.alpinebackend.board.BoardController.BoardFullResponse;
+import static com.mtxrii.wikiforge.alpinebackend.board.BoardController.BoardMemberResponse;
+import static com.mtxrii.wikiforge.alpinebackend.board.BoardController.BoardPatchRequest;
+import static com.mtxrii.wikiforge.alpinebackend.board.BoardController.BoardRequest;
 
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.column.ColumnService;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
 import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.BoardResponse;
 import com.mtxrii.wikiforge.alpinebackend.label.LabelService;
