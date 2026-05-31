@@ -1,9 +1,11 @@
 package com.mtxrii.wikiforge.alpinebackend.workspace;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspacePatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceRequest;
+import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,14 +49,5 @@ public class WorkspaceController {
     ResponseEntity<Void> delete(@PathVariable UUID workspaceId) {
         workspaceService.delete(workspaceId);
         return ResponseEntity.noContent().build();
-    }
-
-    public record WorkspaceRequest(String name, UUID ownerId) {
-    }
-
-    public record WorkspacePatchRequest(String name) {
-    }
-
-    public record WorkspaceResponse(UUID id, String name, UUID ownerId, Instant createdAt, Instant updatedAt) {
     }
 }

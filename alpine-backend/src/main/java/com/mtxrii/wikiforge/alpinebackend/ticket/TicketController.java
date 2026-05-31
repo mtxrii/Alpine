@@ -1,12 +1,14 @@
 package com.mtxrii.wikiforge.alpinebackend.ticket;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.ColumnSummary;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.LabelResponse;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.UserSummary;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.AddLabelRequest;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.AssignUserRequest;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.MoveTicketRequest;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketRequest;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -73,29 +75,5 @@ public class TicketController {
     ResponseEntity<Void> delete(@PathVariable UUID ticketId) {
         ticketService.delete(ticketId);
         return ResponseEntity.noContent().build();
-    }
-
-    public record TicketRequest(UUID columnId, String title, String description, String priority,
-                                String status, Integer position, UUID createdBy, Instant dueDate) {
-    }
-
-    public record TicketPatchRequest(UUID columnId, String title, String description, String priority,
-                                     String status, Integer position, Boolean archived, Instant dueDate) {
-    }
-
-    public record MoveTicketRequest(UUID sourceColumnId, UUID destinationColumnId, Integer newPosition) {
-    }
-
-    public record AssignUserRequest(UUID userId) {
-    }
-
-    public record AddLabelRequest(UUID labelId) {
-    }
-
-    public record TicketResponse(UUID id, UUID boardId, String title, String description, String priority,
-                                 String status, ColumnSummary column, Integer position,
-                                 List<UserSummary> assignees, List<LabelResponse> labels,
-                                 UserSummary createdBy, Instant dueDate, Boolean archived,
-                                 Instant createdAt, Instant updatedAt) {
     }
 }

@@ -1,13 +1,12 @@
 package com.mtxrii.wikiforge.alpinebackend.workspace;
 
-import static com.mtxrii.wikiforge.alpinebackend.workspace.WorkspaceController.WorkspacePatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.workspace.WorkspaceController.WorkspaceRequest;
-import static com.mtxrii.wikiforge.alpinebackend.workspace.WorkspaceController.WorkspaceResponse;
-
 import java.util.Map;
 import java.util.UUID;
 
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
+import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspacePatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceRequest;
+import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceResponse;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;

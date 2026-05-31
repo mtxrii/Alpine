@@ -1,12 +1,11 @@
 package com.mtxrii.wikiforge.alpinebackend.auth;
 
-import static com.mtxrii.wikiforge.alpinebackend.auth.AuthController.LoginRequest;
-import static com.mtxrii.wikiforge.alpinebackend.auth.AuthController.RegisterRequest;
-import static com.mtxrii.wikiforge.alpinebackend.auth.AuthController.UserResponse;
-
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.auth.dto.LoginRequest;
+import com.mtxrii.wikiforge.alpinebackend.auth.dto.RegisterRequest;
+import com.mtxrii.wikiforge.alpinebackend.auth.dto.UserResponse;
 import com.mtxrii.wikiforge.alpinebackend.common.ApiException;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
 import org.springframework.http.HttpStatus;

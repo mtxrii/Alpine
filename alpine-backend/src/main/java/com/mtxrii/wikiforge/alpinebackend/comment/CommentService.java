@@ -1,12 +1,11 @@
 package com.mtxrii.wikiforge.alpinebackend.comment;
 
-import static com.mtxrii.wikiforge.alpinebackend.comment.CommentController.CommentPatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.comment.CommentController.CommentRequest;
-import static com.mtxrii.wikiforge.alpinebackend.comment.CommentController.CommentResponse;
-
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentRequest;
+import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentResponse;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;

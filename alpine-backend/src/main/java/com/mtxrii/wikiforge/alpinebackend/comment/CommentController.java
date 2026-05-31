@@ -1,10 +1,11 @@
 package com.mtxrii.wikiforge.alpinebackend.comment;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import com.mtxrii.wikiforge.alpinebackend.comment.CommentService;
+import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentRequest;
+import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,15 +42,5 @@ public class CommentController {
     ResponseEntity<Void> delete(@PathVariable UUID commentId) {
         commentService.delete(commentId);
         return ResponseEntity.noContent().build();
-    }
-
-    public record CommentRequest(UUID authorId, String body) {
-    }
-
-    public record CommentPatchRequest(String body) {
-    }
-
-    public record CommentResponse(UUID id, UUID ticketId, UUID authorId, String authorName,
-                                  String body, Instant createdAt, Instant updatedAt) {
     }
 }

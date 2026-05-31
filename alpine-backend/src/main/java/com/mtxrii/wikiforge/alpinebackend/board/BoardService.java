@@ -1,16 +1,15 @@
 package com.mtxrii.wikiforge.alpinebackend.board;
 
-import static com.mtxrii.wikiforge.alpinebackend.board.BoardController.BoardFullResponse;
-import static com.mtxrii.wikiforge.alpinebackend.board.BoardController.BoardMemberResponse;
-import static com.mtxrii.wikiforge.alpinebackend.board.BoardController.BoardPatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.board.BoardController.BoardRequest;
-
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardFullResponse;
+import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardMemberResponse;
+import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardRequest;
+import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardResponse;
 import com.mtxrii.wikiforge.alpinebackend.column.ColumnService;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.BoardResponse;
 import com.mtxrii.wikiforge.alpinebackend.label.LabelService;
 import com.mtxrii.wikiforge.alpinebackend.ticket.TicketService;
 import org.springframework.jdbc.core.RowMapper;

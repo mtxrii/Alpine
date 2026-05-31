@@ -1,13 +1,12 @@
 package com.mtxrii.wikiforge.alpinebackend.label;
 
-import static com.mtxrii.wikiforge.alpinebackend.label.LabelController.LabelPatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.label.LabelController.LabelRequest;
-
 import java.util.Map;
 import java.util.UUID;
 
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.LabelResponse;
+import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelRequest;
+import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelResponse;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;

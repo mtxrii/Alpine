@@ -3,8 +3,10 @@ package com.mtxrii.wikiforge.alpinebackend.column;
 import java.util.List;
 import java.util.UUID;
 
-import com.mtxrii.wikiforge.alpinebackend.column.ColumnService;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.ColumnResponse;
+import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnRequest;
+import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnResponse;
+import com.mtxrii.wikiforge.alpinebackend.column.dto.ReorderColumnsRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,14 +48,5 @@ public class ColumnController {
     ResponseEntity<Void> delete(@PathVariable UUID columnId) {
         columnService.delete(columnId);
         return ResponseEntity.noContent().build();
-    }
-
-    public record ColumnRequest(String name, Integer position, String color) {
-    }
-
-    public record ColumnPatchRequest(String name, Integer position, String color) {
-    }
-
-    public record ReorderColumnsRequest(List<UUID> orderedColumnIds) {
     }
 }

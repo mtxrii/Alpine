@@ -1,14 +1,13 @@
 package com.mtxrii.wikiforge.alpinebackend.column;
 
-import static com.mtxrii.wikiforge.alpinebackend.column.ColumnController.ColumnPatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.column.ColumnController.ColumnRequest;
-import static com.mtxrii.wikiforge.alpinebackend.column.ColumnController.ReorderColumnsRequest;
-
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnRequest;
+import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnResponse;
+import com.mtxrii.wikiforge.alpinebackend.column.dto.ReorderColumnsRequest;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.ColumnResponse;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;

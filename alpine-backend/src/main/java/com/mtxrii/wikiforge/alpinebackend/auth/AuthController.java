@@ -3,7 +3,9 @@ package com.mtxrii.wikiforge.alpinebackend.auth;
 import java.util.Map;
 import java.util.UUID;
 
-import com.mtxrii.wikiforge.alpinebackend.auth.AuthService;
+import com.mtxrii.wikiforge.alpinebackend.auth.dto.LoginRequest;
+import com.mtxrii.wikiforge.alpinebackend.auth.dto.RegisterRequest;
+import com.mtxrii.wikiforge.alpinebackend.auth.dto.UserResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,14 +41,5 @@ public class AuthController {
     @GetMapping("/me")
     ResponseEntity<UserResponse> me(@RequestHeader("X-User-Id") UUID userId) {
         return ResponseEntity.ok(authService.getUser(userId));
-    }
-
-    public record RegisterRequest(String email, String name, String avatarUrl) {
-    }
-
-    public record LoginRequest(String email) {
-    }
-
-    public record UserResponse(UUID id, String email, String name, String avatarUrl) {
     }
 }

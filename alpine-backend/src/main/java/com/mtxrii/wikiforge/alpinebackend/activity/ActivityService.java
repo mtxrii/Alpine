@@ -1,10 +1,9 @@
 package com.mtxrii.wikiforge.alpinebackend.activity;
 
-import static com.mtxrii.wikiforge.alpinebackend.activity.ActivityController.ActivityResponse;
-
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.activity.dto.ActivityResponse;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;

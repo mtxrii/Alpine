@@ -1,17 +1,16 @@
 package com.mtxrii.wikiforge.alpinebackend.ticket;
 
-import static com.mtxrii.wikiforge.alpinebackend.ticket.TicketController.MoveTicketRequest;
-import static com.mtxrii.wikiforge.alpinebackend.ticket.TicketController.TicketPatchRequest;
-import static com.mtxrii.wikiforge.alpinebackend.ticket.TicketController.TicketRequest;
-import static com.mtxrii.wikiforge.alpinebackend.ticket.TicketController.TicketResponse;
-
 import java.util.Map;
 import java.util.UUID;
 
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.ColumnSummary;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.LabelResponse;
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.UserSummary;
+import com.mtxrii.wikiforge.alpinebackend.common.dto.ColumnSummary;
+import com.mtxrii.wikiforge.alpinebackend.common.dto.UserSummary;
+import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelResponse;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.MoveTicketRequest;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketRequest;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketResponse;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;

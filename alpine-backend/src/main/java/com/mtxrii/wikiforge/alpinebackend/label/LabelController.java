@@ -2,7 +2,9 @@ package com.mtxrii.wikiforge.alpinebackend.label;
 
 import java.util.UUID;
 
-import com.mtxrii.wikiforge.alpinebackend.common.SimpleDtos.LabelResponse;
+import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelPatchRequest;
+import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelRequest;
+import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -33,11 +35,5 @@ public class LabelController {
     ResponseEntity<Void> delete(@PathVariable UUID labelId) {
         labelService.delete(labelId);
         return ResponseEntity.noContent().build();
-    }
-
-    public record LabelRequest(String name, String color) {
-    }
-
-    public record LabelPatchRequest(String name, String color) {
     }
 }
