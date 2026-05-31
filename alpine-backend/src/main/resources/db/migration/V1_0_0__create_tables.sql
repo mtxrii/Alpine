@@ -105,5 +105,6 @@ CREATE TABLE activity_logs (
     user_id UUID NOT NULL REFERENCES users(id),
     action TEXT NOT NULL,
     metadata JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
