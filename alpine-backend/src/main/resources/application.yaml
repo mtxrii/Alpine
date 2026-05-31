@@ -16,3 +16,10 @@ spring:
 
 server:
   port: ${PORT:8080}
+
+app:
+  security:
+    jwt:
+      issuer: ${JWT_ISSUER:alpine-backend}
+      secret: ${JWT_SECRET:change-me-in-production-with-at-least-32-characters}
+      access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:PT2H}

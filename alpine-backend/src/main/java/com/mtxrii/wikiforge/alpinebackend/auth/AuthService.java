@@ -3,11 +3,13 @@ package com.mtxrii.wikiforge.alpinebackend.auth;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.auth.dto.AuthResponse;
 import com.mtxrii.wikiforge.alpinebackend.auth.dto.LoginRequest;
 import com.mtxrii.wikiforge.alpinebackend.auth.dto.RegisterRequest;
 import com.mtxrii.wikiforge.alpinebackend.auth.dto.UserResponse;
 import com.mtxrii.wikiforge.alpinebackend.common.ApiException;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
+import com.mtxrii.wikiforge.alpinebackend.security.JwtTokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService extends JdbcSupport {
+    private final JwtTokenService jwtTokenService;
+
     private final RowMapper<UserResponse> userMapper = (rs, rowNum) -> new UserResponse(
             rs.getObject("id", UUID.class),
             rs.getString("email"),
@@ -22,22 +26,24 @@ public class AuthService extends JdbcSupport {
             rs.getString("avatar_url")
     );
 
-    public AuthService(NamedParameterJdbcTemplate jdbc) {
+    public AuthService(NamedParameterJdbcTemplate jdbc, JwtTokenService jwtTokenService) {
         super(jdbc);
+        this.jwtTokenService = jwtTokenService;
     }
 
-    public UserResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request) {
         UUID id = insertReturningId("""
                 INSERT INTO users (email, name, avatar_url)
                 VALUES (:email, :name, :avatarUrl)
                 RETURNING id
                 """, params("email", request.email(), "name", request.name(), "avatarUrl", request.avatarUrl()));
-        return getUser(id);
+        return jwtTokenService.issueAuthResponse(getUser(id));
     }
 
-    public UserResponse login(LoginRequest request) {
-        return optional("SELECT * FROM users WHERE email = :email", Map.of("email", request.email()), userMapper)
+    public AuthResponse login(LoginRequest request) {
+        UserResponse user = optional("SELECT * FROM users WHERE email = :email", Map.of("email", request.email()), userMapper)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email"));
+        return jwtTokenService.issueAuthResponse(user);
     }
 
     public UserResponse getUser(UUID id) {
