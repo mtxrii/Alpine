@@ -2,17 +2,28 @@ package com.mtxrii.wikiforge.alpinebackend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
-                + "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,"
-                + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration"
-})
+@Testcontainers
+@SpringBootTest
 class AlpineBackendApplicationTests {
-    @MockitoBean
-    NamedParameterJdbcTemplate jdbc;
+
+    @Container
+    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
+            .withDatabaseName("alpine")
+            .withUsername("postgres")
+            .withPassword("postgres");
+
+    @DynamicPropertySource
+    static void postgresProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
 
     @Test
     void contextLoads() {
