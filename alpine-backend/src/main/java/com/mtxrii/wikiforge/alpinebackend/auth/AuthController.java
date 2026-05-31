@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.mtxrii.wikiforge.alpinebackend.auth.dto.LoginRequest;
 import com.mtxrii.wikiforge.alpinebackend.auth.dto.RegisterRequest;
 import com.mtxrii.wikiforge.alpinebackend.auth.dto.UserResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,12 +25,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
+    ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
-    ResponseEntity<UserResponse> login(@RequestBody LoginRequest request) {
+    ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 

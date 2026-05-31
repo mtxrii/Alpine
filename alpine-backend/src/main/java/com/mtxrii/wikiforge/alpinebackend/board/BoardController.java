@@ -7,6 +7,7 @@ import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardFullResponse;
 import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardPatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardRequest;
 import com.mtxrii.wikiforge.alpinebackend.board.dto.BoardResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +33,7 @@ public class BoardController {
     }
 
     @PostMapping
-    ResponseEntity<BoardResponse> create(@RequestBody BoardRequest request) {
+    ResponseEntity<BoardResponse> create(@Valid @RequestBody BoardRequest request) {
         return ResponseEntity.ok(boardService.create(request));
     }
 
@@ -47,7 +48,7 @@ public class BoardController {
     }
 
     @PatchMapping("/{boardId}")
-    BoardResponse update(@PathVariable UUID boardId, @RequestBody BoardPatchRequest request) {
+    BoardResponse update(@PathVariable UUID boardId, @Valid @RequestBody BoardPatchRequest request) {
         return boardService.update(boardId, request);
     }
 

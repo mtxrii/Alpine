@@ -1,6 +1,7 @@
 package com.mtxrii.wikiforge.alpinebackend.common;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -22,11 +23,15 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException exception) {
+        Map<String, String> fields = new LinkedHashMap<>();
+        exception.getBindingResult().getFieldErrors().forEach(error ->
+                fields.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.badRequest().body(Map.of(
                 "timestamp", Instant.now(),
                 "status", 400,
                 "error", "Bad Request",
-                "message", "Request validation failed"
+                "message", "Request validation failed",
+                "fields", fields
         ));
     }
 }

@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspacePatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceRequest;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +32,7 @@ public class WorkspaceController {
     }
 
     @PostMapping
-    ResponseEntity<WorkspaceResponse> create(@RequestBody WorkspaceRequest request) {
+    ResponseEntity<WorkspaceResponse> create(@Valid @RequestBody WorkspaceRequest request) {
         return ResponseEntity.ok(workspaceService.create(request));
     }
 
@@ -41,7 +42,7 @@ public class WorkspaceController {
     }
 
     @PatchMapping("/{workspaceId}")
-    WorkspaceResponse update(@PathVariable UUID workspaceId, @RequestBody WorkspacePatchRequest request) {
+    WorkspaceResponse update(@PathVariable UUID workspaceId, @Valid @RequestBody WorkspacePatchRequest request) {
         return workspaceService.update(workspaceId, request);
     }
 

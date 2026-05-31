@@ -1,4 +1,9 @@
 package com.mtxrii.wikiforge.alpinebackend.board.dto;
 
-public record BoardPatchRequest(String name, String description) {
+import jakarta.validation.constraints.Size;
+
+public record BoardPatchRequest(
+        @Size(max = 160) String name,
+        @Size(max = 2000) String description
+) {
 }

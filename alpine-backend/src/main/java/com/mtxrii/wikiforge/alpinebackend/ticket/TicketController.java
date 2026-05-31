@@ -9,6 +9,7 @@ import com.mtxrii.wikiforge.alpinebackend.ticket.dto.MoveTicketRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketPatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +33,7 @@ public class TicketController {
     }
 
     @PostMapping("/boards/{boardId}/tickets")
-    ResponseEntity<TicketResponse> create(@PathVariable UUID boardId, @RequestBody TicketRequest request) {
+    ResponseEntity<TicketResponse> create(@PathVariable UUID boardId, @Valid @RequestBody TicketRequest request) {
         return ResponseEntity.ok(ticketService.create(boardId, request));
     }
 
@@ -42,17 +43,17 @@ public class TicketController {
     }
 
     @PatchMapping("/tickets/{ticketId}")
-    TicketResponse update(@PathVariable UUID ticketId, @RequestBody TicketPatchRequest request) {
+    TicketResponse update(@PathVariable UUID ticketId, @Valid @RequestBody TicketPatchRequest request) {
         return ticketService.update(ticketId, request);
     }
 
     @PostMapping("/tickets/{ticketId}/move")
-    TicketResponse move(@PathVariable UUID ticketId, @RequestBody MoveTicketRequest request) {
+    TicketResponse move(@PathVariable UUID ticketId, @Valid @RequestBody MoveTicketRequest request) {
         return ticketService.move(ticketId, request);
     }
 
     @PostMapping("/tickets/{ticketId}/assignees")
-    TicketResponse assign(@PathVariable UUID ticketId, @RequestBody AssignUserRequest request) {
+    TicketResponse assign(@PathVariable UUID ticketId, @Valid @RequestBody AssignUserRequest request) {
         return ticketService.assign(ticketId, request.userId());
     }
 
@@ -62,7 +63,7 @@ public class TicketController {
     }
 
     @PostMapping("/tickets/{ticketId}/labels")
-    TicketResponse addLabel(@PathVariable UUID ticketId, @RequestBody AddLabelRequest request) {
+    TicketResponse addLabel(@PathVariable UUID ticketId, @Valid @RequestBody AddLabelRequest request) {
         return ticketService.addLabel(ticketId, request.labelId());
     }
 

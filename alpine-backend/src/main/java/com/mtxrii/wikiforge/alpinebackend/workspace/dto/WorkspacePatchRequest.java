@@ -1,4 +1,8 @@
 package com.mtxrii.wikiforge.alpinebackend.workspace.dto;
 
-public record WorkspacePatchRequest(String name) {
+import jakarta.validation.constraints.Size;
+
+public record WorkspacePatchRequest(
+        @Size(max = 120) String name
+) {
 }

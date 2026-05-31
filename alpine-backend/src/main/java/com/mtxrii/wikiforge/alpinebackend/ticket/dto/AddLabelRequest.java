@@ -2,5 +2,7 @@ package com.mtxrii.wikiforge.alpinebackend.ticket.dto;
 
 import java.util.UUID;
 
-public record AddLabelRequest(UUID labelId) {
+import jakarta.validation.constraints.NotNull;
+
+public record AddLabelRequest(@NotNull UUID labelId) {
 }

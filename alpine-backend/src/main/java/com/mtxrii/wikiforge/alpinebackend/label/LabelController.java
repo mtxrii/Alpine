@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelPatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelRequest;
 import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,12 +23,12 @@ public class LabelController {
     }
 
     @PostMapping("/boards/{boardId}/labels")
-    ResponseEntity<LabelResponse> create(@PathVariable UUID boardId, @RequestBody LabelRequest request) {
+    ResponseEntity<LabelResponse> create(@PathVariable UUID boardId, @Valid @RequestBody LabelRequest request) {
         return ResponseEntity.ok(labelService.create(boardId, request));
     }
 
     @PatchMapping("/labels/{labelId}")
-    LabelResponse update(@PathVariable UUID labelId, @RequestBody LabelPatchRequest request) {
+    LabelResponse update(@PathVariable UUID labelId, @Valid @RequestBody LabelPatchRequest request) {
         return labelService.update(labelId, request);
     }
 

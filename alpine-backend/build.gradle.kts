@@ -23,6 +23,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.postgresql:postgresql")
     implementation("org.projectlombok:lombok")
     implementation("org.flywaydb:flyway-database-postgresql")

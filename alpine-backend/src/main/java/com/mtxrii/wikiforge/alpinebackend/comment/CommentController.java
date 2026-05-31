@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentPatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentRequest;
 import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,12 +30,12 @@ public class CommentController {
     }
 
     @PostMapping("/tickets/{ticketId}/comments")
-    ResponseEntity<CommentResponse> create(@PathVariable UUID ticketId, @RequestBody CommentRequest request) {
+    ResponseEntity<CommentResponse> create(@PathVariable UUID ticketId, @Valid @RequestBody CommentRequest request) {
         return ResponseEntity.ok(commentService.create(ticketId, request));
     }
 
     @PatchMapping("/comments/{commentId}")
-    CommentResponse update(@PathVariable UUID commentId, @RequestBody CommentPatchRequest request) {
+    CommentResponse update(@PathVariable UUID commentId, @Valid @RequestBody CommentPatchRequest request) {
         return commentService.update(commentId, request);
     }
 

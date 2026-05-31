@@ -7,6 +7,7 @@ import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnPatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnRequest;
 import com.mtxrii.wikiforge.alpinebackend.column.dto.ColumnResponse;
 import com.mtxrii.wikiforge.alpinebackend.column.dto.ReorderColumnsRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,17 +31,17 @@ public class ColumnController {
     }
 
     @PostMapping("/boards/{boardId}/columns")
-    ResponseEntity<ColumnResponse> create(@PathVariable UUID boardId, @RequestBody ColumnRequest request) {
+    ResponseEntity<ColumnResponse> create(@PathVariable UUID boardId, @Valid @RequestBody ColumnRequest request) {
         return ResponseEntity.ok(columnService.create(boardId, request));
     }
 
     @PostMapping("/boards/{boardId}/columns/reorder")
-    List<ColumnResponse> reorder(@PathVariable UUID boardId, @RequestBody ReorderColumnsRequest request) {
+    List<ColumnResponse> reorder(@PathVariable UUID boardId, @Valid @RequestBody ReorderColumnsRequest request) {
         return columnService.reorder(boardId, request);
     }
 
     @PatchMapping("/columns/{columnId}")
-    ColumnResponse update(@PathVariable UUID columnId, @RequestBody ColumnPatchRequest request) {
+    ColumnResponse update(@PathVariable UUID columnId, @Valid @RequestBody ColumnPatchRequest request) {
         return columnService.update(columnId, request);
     }
 

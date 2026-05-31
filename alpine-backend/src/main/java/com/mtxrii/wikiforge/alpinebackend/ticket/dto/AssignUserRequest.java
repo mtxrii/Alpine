@@ -2,5 +2,7 @@ package com.mtxrii.wikiforge.alpinebackend.ticket.dto;
 
 import java.util.UUID;
 
-public record AssignUserRequest(UUID userId) {
+import jakarta.validation.constraints.NotNull;
+
+public record AssignUserRequest(@NotNull UUID userId) {
 }
