@@ -86,7 +86,7 @@ public class TicketService extends JdbcSupport {
     public TicketResponse move(UUID id, MoveTicketRequest request) {
         ensureUpdated("Ticket", id, update("""
                 UPDATE tickets
-                SET column_id = :destinationColumnId, position = :newPosition, updated_at = NOW()
+                SET column_id = :destinationColumnId, position = :newPosition
                 WHERE id = :id AND column_id = :sourceColumnId
                 """, Map.of("id", id, "sourceColumnId", request.sourceColumnId(),
                 "destinationColumnId", request.destinationColumnId(), "newPosition", request.newPosition())));
