@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import com.mtxrii.wikiforge.alpinebackend.common.dto.ColumnSummary;
 import com.mtxrii.wikiforge.alpinebackend.common.dto.UserSummary;
+import com.mtxrii.wikiforge.alpinebackend.ticket.dto.MoveTicketRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketPatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketResponse;
@@ -120,6 +121,27 @@ class TicketControllerTest {
                                   "archived": false
                                 }
                                 """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(ticket.id().toString()));
+    }
+
+    @Test
+    void moveReturnsTicketAtDestinationPosition() throws Exception {
+        TicketResponse ticket = ticket();
+        UUID sourceColumnId = ticket.column().id();
+        UUID destinationColumnId = UUID.randomUUID();
+        when(ticketService.move(eq(ticket.id()), eq(new MoveTicketRequest(sourceColumnId, destinationColumnId, 2500))))
+                .thenReturn(ticket);
+
+        mockMvc.perform(post("/tickets/{ticketId}/move", ticket.id())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "sourceColumnId": "%s",
+                                  "destinationColumnId": "%s",
+                                  "newPosition": 2500
+                                }
+                                """.formatted(sourceColumnId, destinationColumnId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(ticket.id().toString()));
     }
