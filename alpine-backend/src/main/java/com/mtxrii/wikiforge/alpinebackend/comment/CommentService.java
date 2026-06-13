@@ -1,8 +1,10 @@
 package com.mtxrii.wikiforge.alpinebackend.comment;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.activity.ActivityService;
 import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentPatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentRequest;
 import com.mtxrii.wikiforge.alpinebackend.comment.dto.CommentResponse;
@@ -10,9 +12,12 @@ import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CommentService extends JdbcSupport {
+    private final ActivityService activityService;
+
     private final RowMapper<CommentResponse> mapper = (rs, rowNum) -> new CommentResponse(
             rs.getObject("id", UUID.class),
             rs.getObject("ticket_id", UUID.class),
@@ -23,8 +28,9 @@ public class CommentService extends JdbcSupport {
             instant(rs, "updated_at")
     );
 
-    public CommentService(NamedParameterJdbcTemplate jdbc) {
+    public CommentService(NamedParameterJdbcTemplate jdbc, ActivityService activityService) {
         super(jdbc);
+        this.activityService = activityService;
     }
 
     public java.util.List<CommentResponse> list(UUID ticketId) {
@@ -32,13 +38,20 @@ public class CommentService extends JdbcSupport {
                 Map.of("ticketId", ticketId), mapper);
     }
 
+    @Transactional
     public CommentResponse create(UUID ticketId, CommentRequest request) {
+        TicketActivityTarget target = requireTicketActivityTarget(ticketId);
         UUID id = insertReturningId("""
                 INSERT INTO comments (ticket_id, author_id, body)
                 VALUES (:ticketId, :authorId, :body)
                 RETURNING id
                 """, Map.of("ticketId", ticketId, "authorId", request.authorId(), "body", request.body()));
-        return get(id);
+        CommentResponse comment = get(id);
+        activityService.log(target.boardId(), ticketId, request.authorId(), ActivityService.COMMENT_ADDED, metadata(
+                "commentId", id,
+                "ticketTitle", target.ticketTitle()
+        ));
+        return comment;
     }
 
     public CommentResponse get(UUID id) {
@@ -64,5 +77,27 @@ public class CommentService extends JdbcSupport {
                 FROM comments c
                 JOIN users u ON u.id = c.author_id
                 """;
+    }
+
+    private TicketActivityTarget requireTicketActivityTarget(UUID ticketId) {
+        return required("Ticket", ticketId, """
+                SELECT board_id, title
+                FROM tickets
+                WHERE id = :id
+                """, Map.of("id", ticketId), (rs, rowNum) -> new TicketActivityTarget(
+                rs.getObject("board_id", UUID.class),
+                rs.getString("title")
+        ));
+    }
+
+    private Map<String, Object> metadata(Object... keysAndValues) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            metadata.put((String) keysAndValues[i], keysAndValues[i + 1]);
+        }
+        return metadata;
+    }
+
+    private record TicketActivityTarget(UUID boardId, String ticketTitle) {
     }
 }

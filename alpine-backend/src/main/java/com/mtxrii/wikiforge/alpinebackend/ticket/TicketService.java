@@ -1,9 +1,12 @@
 package com.mtxrii.wikiforge.alpinebackend.ticket;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.activity.ActivityService;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
+import com.mtxrii.wikiforge.alpinebackend.common.ApiException;
 import com.mtxrii.wikiforge.alpinebackend.common.dto.ColumnSummary;
 import com.mtxrii.wikiforge.alpinebackend.common.dto.UserSummary;
 import com.mtxrii.wikiforge.alpinebackend.label.dto.LabelResponse;
@@ -11,6 +14,7 @@ import com.mtxrii.wikiforge.alpinebackend.ticket.dto.MoveTicketRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketPatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketRequest;
 import com.mtxrii.wikiforge.alpinebackend.ticket.dto.TicketResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TicketService extends JdbcSupport {
+    private final ActivityService activityService;
+
     private final RowMapper<TicketRow> rowMapper = (rs, rowNum) -> new TicketRow(
             rs.getObject("id", UUID.class),
             rs.getObject("board_id", UUID.class),
@@ -36,8 +42,9 @@ public class TicketService extends JdbcSupport {
             instant(rs, "updated_at")
     );
 
-    public TicketService(NamedParameterJdbcTemplate jdbc) {
+    public TicketService(NamedParameterJdbcTemplate jdbc, ActivityService activityService) {
         super(jdbc);
+        this.activityService = activityService;
     }
 
     public java.util.List<TicketResponse> listByBoard(UUID boardId) {
@@ -46,6 +53,7 @@ public class TicketService extends JdbcSupport {
                 .stream().map(this::hydrate).toList();
     }
 
+    @Transactional
     public TicketResponse create(UUID boardId, TicketRequest request) {
         UUID id = insertReturningId("""
                 INSERT INTO tickets (board_id, column_id, title, description, priority, status, position, created_by, due_date)
@@ -55,7 +63,13 @@ public class TicketService extends JdbcSupport {
                 "description", request.description(), "priority", request.priority(), "status", request.status(),
                 "position", request.position() == null ? nextPosition(request.columnId()) : request.position(),
                 "createdBy", request.createdBy(), "dueDate", request.dueDate()));
-        return get(id);
+        TicketResponse ticket = get(id);
+        activityService.log(boardId, id, request.createdBy(), ActivityService.TICKET_CREATED, metadata(
+                "title", ticket.title(),
+                "columnId", ticket.column().id(),
+                "position", ticket.position()
+        ));
+        return ticket;
     }
 
     public TicketResponse get(UUID id) {
@@ -63,7 +77,9 @@ public class TicketService extends JdbcSupport {
         return hydrate(row);
     }
 
+    @Transactional
     public TicketResponse update(UUID id, TicketPatchRequest request) {
+        TicketResponse before = get(id);
         ensureUpdated("Ticket", id, update("""
                 UPDATE tickets
                 SET column_id = COALESCE(:columnId, column_id),
@@ -79,26 +95,56 @@ public class TicketService extends JdbcSupport {
                 """, params("id", id, "columnId", request.columnId(), "title", request.title(),
                 "description", request.description(), "priority", request.priority(), "status", request.status(),
                 "position", request.position(), "archived", request.archived(), "dueDate", request.dueDate())));
-        return get(id);
+        TicketResponse after = get(id);
+        activityService.log(after.boardId(), id, after.createdBy().id(), ActivityService.TICKET_UPDATED, metadata(
+                "previousTitle", before.title(),
+                "title", after.title(),
+                "previousPriority", before.priority(),
+                "priority", after.priority(),
+                "previousStatus", before.status(),
+                "status", after.status(),
+                "previousArchived", before.archived(),
+                "archived", after.archived()
+        ));
+        return after;
     }
 
     @Transactional
     public TicketResponse move(UUID id, MoveTicketRequest request) {
+        TicketResponse before = get(id);
         ensureUpdated("Ticket", id, update("""
                 UPDATE tickets
                 SET column_id = :destinationColumnId, position = :newPosition
                 WHERE id = :id AND column_id = :sourceColumnId
                 """, Map.of("id", id, "sourceColumnId", request.sourceColumnId(),
                 "destinationColumnId", request.destinationColumnId(), "newPosition", request.newPosition())));
-        return get(id);
+        TicketResponse after = get(id);
+        activityService.log(after.boardId(), id, after.createdBy().id(), ActivityService.TICKET_MOVED, metadata(
+                "sourceColumnId", before.column().id(),
+                "sourceColumnName", before.column().name(),
+                "destinationColumnId", after.column().id(),
+                "destinationColumnName", after.column().name(),
+                "previousPosition", before.position(),
+                "position", after.position()
+        ));
+        return after;
     }
 
+    @Transactional
     public TicketResponse assign(UUID ticketId, UUID userId) {
-        jdbc.update("""
+        TicketResponse ticket = get(ticketId);
+        requireUser(userId);
+        int inserted = jdbc.update("""
                 INSERT INTO ticket_assignees (ticket_id, user_id)
                 VALUES (:ticketId, :userId)
                 ON CONFLICT DO NOTHING
                 """, Map.of("ticketId", ticketId, "userId", userId));
+        if (inserted > 0) {
+            activityService.log(ticket.boardId(), ticketId, userId, ActivityService.TICKET_ASSIGNED, metadata(
+                    "assignedUserId", userId,
+                    "ticketTitle", ticket.title()
+            ));
+        }
         return get(ticketId);
     }
 
@@ -108,7 +154,13 @@ public class TicketService extends JdbcSupport {
         return get(ticketId);
     }
 
+    @Transactional
     public TicketResponse addLabel(UUID ticketId, UUID labelId) {
+        TicketResponse ticket = get(ticketId);
+        LabelResponse label = requireLabel(labelId);
+        if (!ticket.boardId().equals(label.boardId())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Label does not belong to ticket board: " + labelId);
+        }
         jdbc.update("""
                 INSERT INTO ticket_labels (ticket_id, label_id)
                 VALUES (:ticketId, :labelId)
@@ -164,6 +216,28 @@ public class TicketService extends JdbcSupport {
         Integer max = jdbc.queryForObject("SELECT COALESCE(MAX(position), 0) FROM tickets WHERE column_id = :columnId",
                 Map.of("columnId", columnId), Integer.class);
         return (max == null ? 0 : max) + 1000;
+    }
+
+    private UUID requireUser(UUID userId) {
+        return required("User", userId, "SELECT id FROM users WHERE id = :id", Map.of("id", userId),
+                (rs, rowNum) -> rs.getObject("id", UUID.class));
+    }
+
+    private LabelResponse requireLabel(UUID labelId) {
+        return required("Label", labelId, "SELECT id, board_id, name, color FROM labels WHERE id = :id",
+                Map.of("id", labelId), (rs, rowNum) -> new LabelResponse(
+                        rs.getObject("id", UUID.class),
+                        rs.getObject("board_id", UUID.class),
+                        rs.getString("name"),
+                        rs.getString("color")));
+    }
+
+    private Map<String, Object> metadata(Object... keysAndValues) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            metadata.put((String) keysAndValues[i], keysAndValues[i + 1]);
+        }
+        return metadata;
     }
 
     private record TicketRow(UUID id, UUID boardId, String title, String description, String priority,
