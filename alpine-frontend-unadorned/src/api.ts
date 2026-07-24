@@ -2,6 +2,7 @@ import type {
   ActivityResponse,
   AuthResponse,
   BoardFullResponse,
+  BoardMemberResponse,
   BoardResponse,
   ColumnRequest,
   ColumnResponse,
@@ -168,5 +169,21 @@ export const api = {
   },
   listBoardActivity(token: string, boardId: UUID) {
     return request<ActivityResponse[]>(`/boards/${boardId}/activity`, { token })
+  },
+  listWorkspaceMembers(token: string, workspaceId: UUID) {
+    return request<BoardMemberResponse[]>(`/workspaces/${workspaceId}/members`, { token })
+  },
+  addWorkspaceMember(token: string, workspaceId: UUID, userId: UUID, role?: string) {
+    return request<BoardMemberResponse[]>(`/workspaces/${workspaceId}/members`, {
+      body: { userId, role },
+      method: 'POST',
+      token,
+    })
+  },
+  removeWorkspaceMember(token: string, workspaceId: UUID, userId: UUID) {
+    return request<void>(`/workspaces/${workspaceId}/members/${userId}`, {
+      method: 'DELETE',
+      token,
+    })
   },
 }

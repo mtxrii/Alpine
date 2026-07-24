@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api } from './api'
+import { mockUsers } from './mock/users'
 import type {
   ApiPriority,
   BoardFullResponse,
+  BoardMemberResponse,
   BoardResponse,
   ColumnResponse,
   CommentResponse,
@@ -167,6 +169,8 @@ function App() {
   const [columnForm, setColumnForm] = useState({ color: starterColumns[0].color, name: '' })
   const [comments, setComments] = useState<CommentResponse[]>([])
   const [commentBody, setCommentBody] = useState('')
+  const [workspaceMembers, setWorkspaceMembers] = useState<BoardMemberResponse[]>([])
+  const [selectedUserIdToAdd, setSelectedUserIdToAdd] = useState('')
 
   const columns = useMemo(() => sortColumns(boardFull?.columns ?? []), [boardFull])
   const tickets = useMemo(
@@ -178,6 +182,23 @@ function App() {
   const visibleBoards = selectedWorkspaceId
     ? boards.filter((board) => board.workspaceId === selectedWorkspaceId)
     : boards
+
+  const allUsers = useMemo(() => {
+    const list = [...mockUsers]
+    if (currentUser && !list.some((u) => u.id === currentUser.id)) {
+      list.unshift({
+        id: currentUser.id,
+        name: currentUser.name,
+        role: 'Current User',
+      })
+    }
+    return list
+  }, [currentUser])
+
+  const availableUsersToAdd = useMemo(() => {
+    const memberIds = workspaceMembers.map((m) => m.id)
+    return allUsers.filter((u) => !memberIds.includes(u.id))
+  }, [allUsers, workspaceMembers])
 
   useEffect(() => {
     if (!accessToken) {
@@ -192,7 +213,9 @@ function App() {
   useEffect(() => {
     if (selectedWorkspaceId) {
       localStorage.setItem(workspaceStorageKey, selectedWorkspaceId)
+      void loadWorkspaceMembers(selectedWorkspaceId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWorkspaceId])
 
   useEffect(() => {
@@ -297,6 +320,68 @@ function App() {
       setComments(await api.listComments(accessToken, ticketId))
     } catch {
       setComments([])
+    }
+  }
+
+  async function loadWorkspaceMembers(workspaceId: string) {
+    if (!accessToken || !workspaceId) {
+      setWorkspaceMembers([])
+      return
+    }
+
+    try {
+      const membersList = await api.listWorkspaceMembers(accessToken, workspaceId)
+      setWorkspaceMembers(membersList)
+    } catch {
+      setWorkspaceMembers([])
+    }
+  }
+
+  async function addWorkspaceMember(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!accessToken || !selectedWorkspaceId || !selectedUserIdToAdd) {
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      const membersList = await api.addWorkspaceMember(accessToken, selectedWorkspaceId, selectedUserIdToAdd)
+      setWorkspaceMembers(membersList)
+      setSelectedUserIdToAdd('')
+      if (selectedBoardId) {
+        await loadBoard(selectedBoardId)
+      }
+      setNotice('Workspace member added.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not add workspace member.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function removeWorkspaceMember(userId: string) {
+    if (!accessToken || !selectedWorkspaceId) {
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      await api.removeWorkspaceMember(accessToken, selectedWorkspaceId, userId)
+      const membersList = await api.listWorkspaceMembers(accessToken, selectedWorkspaceId)
+      setWorkspaceMembers(membersList)
+      if (selectedBoardId) {
+        await loadBoard(selectedBoardId)
+      }
+      setNotice('Workspace member removed.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not remove workspace member.')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -1077,6 +1162,53 @@ function App() {
                   Add starter columns
                 </button>
               )}
+            </form>
+          </section>
+        )}
+
+        {selectedWorkspaceId && (
+          <section className="column-tools workspace-members-tools" aria-label="Workspace Members">
+            <div>
+              <h2>Workspace Members</h2>
+              <p>{workspaceMembers.length === 0 ? 'No members in workspace.' : `${workspaceMembers.length} members in workspace.`}</p>
+            </div>
+            <div className="workspace-members-list">
+              {workspaceMembers.map((member) => (
+                <div className="member-pill" key={member.id}>
+                  <div className="profile-pic" style={{ backgroundColor: getProfileColor(member.name) }}>
+                    {getInitials(member.name)}
+                  </div>
+                  <div className="member-info">
+                    <strong>{member.name}</strong>
+                    <span>{member.role || 'Member'}</span>
+                  </div>
+                  <button
+                    className="delete is-small"
+                    onClick={() => void removeWorkspaceMember(member.id)}
+                    type="button"
+                    title="Remove member"
+                  />
+                </div>
+              ))}
+            </div>
+            <form className="inline-form member-create-form" onSubmit={addWorkspaceMember}>
+              <div className="select is-fullwidth">
+                <select
+                  value={selectedUserIdToAdd}
+                  onChange={(event) => setSelectedUserIdToAdd(event.target.value)}
+                  aria-label="Select user to add"
+                >
+                  <option value="">Select user to add...</option>
+                  {availableUsersToAdd.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.role || 'User'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button className={`button ${isSaving ? 'is-loading' : ''}`} disabled={!selectedUserIdToAdd} type="submit">
+                Add member
+              </button>
             </form>
           </section>
         )}
