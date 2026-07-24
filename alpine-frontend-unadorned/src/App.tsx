@@ -1,55 +1,74 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { starterTickets } from './mock/starterTickets'
-import { mockUsers } from './mock/users'
-import type { Ticket, TicketPriority, TicketStatus } from './types'
+import { api } from './api'
+import type {
+  ApiPriority,
+  BoardFullResponse,
+  BoardResponse,
+  ColumnResponse,
+  CommentResponse,
+  LabelResponse,
+  TicketResponse,
+  UserResponse,
+  UUID,
+  WorkspaceResponse,
+} from './types'
 import './App.css'
 
-type Column = {
-  id: TicketStatus
+type AuthMode = 'login' | 'register'
+
+type TicketForm = {
   title: string
-  accent: string
+  description: string
+  assigneeId: string
+  priority: ApiPriority
+  columnId: string
 }
 
-const columns: Column[] = [
-  { id: 'backlog', title: 'Backlog', accent: 'is-info' },
-  { id: 'ready', title: 'In Progress', accent: 'is-link' },
-  { id: 'progress', title: 'In Review', accent: 'is-warning' },
-  { id: 'done', title: 'Done', accent: 'is-success' },
-]
-
-const emptyForm = {
-  title: '',
-  description: '',
-  assignee: mockUsers[0]?.name ?? '',
-  priority: 'Medium' as TicketPriority,
-  status: 'backlog' as TicketStatus,
+type TicketDraft = {
+  title: string
+  description: string
+  priority: ApiPriority
+  columnId: string
+  assigneeIds: string[]
+  labelIds: string[]
 }
 
-const priorityOptions: TicketPriority[] = ['Low', 'Medium', 'High']
+const tokenStorageKey = 'alpine.accessToken'
+const boardStorageKey = 'alpine.boardId'
+const workspaceStorageKey = 'alpine.workspaceId'
 
+const priorityOptions: ApiPriority[] = ['low', 'medium', 'high', 'urgent']
 const profileColors = [
-  '#26c6ae', // teal
-  '#3b82f6', // blue
-  '#8b5cf6', // purple
-  '#ec4899', // pink
-  '#f59e0b', // amber
-  '#10b981', // emerald
-  '#06b6d4', // cyan
-  '#6366f1', // indigo
-  '#f43f5e', // rose
-  '#14b8a6', // turquoise
-  '#7c3aed', // violet
-  '#d946ef', // fuchsia
-  '#059669', // green
-  '#0891b2', // sky
-  '#e11d48', // crimson
-  '#7c2d12', // orange-brown
-  '#4f46e5', // blue-indigo
-  '#64748b', // slate
-  '#6d28d9', // blue-purple
-  '#be123c', // red-rose
+  '#26c6ae',
+  '#3b82f6',
+  '#8b5cf6',
+  '#ec4899',
+  '#f59e0b',
+  '#10b981',
+  '#06b6d4',
+  '#6366f1',
+  '#f43f5e',
+  '#14b8a6',
+  '#7c3aed',
+  '#d946ef',
+  '#059669',
+  '#0891b2',
+  '#e11d48',
+  '#7c2d12',
+  '#4f46e5',
+  '#64748b',
+  '#6d28d9',
+  '#be123c',
 ]
+
+const emptyTicketForm: TicketForm = {
+  assigneeId: '',
+  columnId: '',
+  description: '',
+  priority: 'medium',
+  title: '',
+}
 
 function getInitials(name: string): string {
   return name
@@ -66,56 +85,381 @@ function getProfileColor(name: string): string {
   return profileColors[colorIndex]
 }
 
+function formatPriority(priority?: string): string {
+  if (!priority) {
+    return 'Medium'
+  }
+
+  return `${priority.charAt(0).toUpperCase()}${priority.slice(1)}`
+}
+
+function sortColumns(columns: ColumnResponse[]): ColumnResponse[] {
+  return [...columns].sort((left, right) => left.position - right.position)
+}
+
+function sortTickets(tickets: TicketResponse[]): TicketResponse[] {
+  return [...tickets].sort((left, right) => (left.position ?? 0) - (right.position ?? 0))
+}
+
+function getTicketColumnId(ticket: TicketResponse): string {
+  return ticket.column?.id ?? ''
+}
+
+function getFirstAssigneeName(ticket: TicketResponse): string {
+  return ticket.assignees?.[0]?.name ?? 'Unassigned'
+}
+
+function getDraftFromTicket(ticket: TicketResponse): TicketDraft {
+  return {
+    assigneeIds: ticket.assignees?.map((assignee) => assignee.id) ?? [],
+    columnId: getTicketColumnId(ticket),
+    description: ticket.description ?? '',
+    labelIds: ticket.labels?.map((label) => label.id) ?? [],
+    priority: (ticket.priority as ApiPriority | undefined) ?? 'medium',
+    title: ticket.title,
+  }
+}
+
+function hasId(items: { id: UUID }[] | undefined, id: UUID): boolean {
+  return items?.some((item) => item.id === id) ?? false
+}
+
 function App() {
-  const [tickets, setTickets] = useState<Ticket[]>(starterTickets)
-  const [nextTicketNumber, setNextTicketNumber] = useState(106)
+  const [accessToken, setAccessToken] = useState(() => localStorage.getItem(tokenStorageKey) ?? '')
+  const [authMode, setAuthMode] = useState<AuthMode>('login')
+  const [authForm, setAuthForm] = useState({
+    email: '',
+    name: '',
+    password: '',
+  })
+  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null)
+  const [workspaces, setWorkspaces] = useState<WorkspaceResponse[]>([])
+  const [boards, setBoards] = useState<BoardResponse[]>([])
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(
+    () => localStorage.getItem(workspaceStorageKey) ?? '',
+  )
+  const [selectedBoardId, setSelectedBoardId] = useState(
+    () => localStorage.getItem(boardStorageKey) ?? '',
+  )
+  const [boardFull, setBoardFull] = useState<BoardFullResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [draggedTicketId, setDraggedTicketId] = useState<string | null>(null)
   const [activeDropTarget, setActiveDropTarget] = useState<string | null>(null)
   const [splitByUser, setSplitByUser] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
-  const [ticketDraft, setTicketDraft] = useState<Ticket | null>(null)
+  const [selectedTicket, setSelectedTicket] = useState<TicketResponse | null>(null)
+  const [ticketDraft, setTicketDraft] = useState<TicketDraft | null>(null)
   const [isEditingDescription, setIsEditingDescription] = useState(false)
   const [descriptionDraft, setDescriptionDraft] = useState('')
-  const [form, setForm] = useState(emptyForm)
+  const [ticketForm, setTicketForm] = useState<TicketForm>(emptyTicketForm)
+  const [workspaceName, setWorkspaceName] = useState('')
+  const [boardForm, setBoardForm] = useState({ description: '', name: '' })
+  const [comments, setComments] = useState<CommentResponse[]>([])
+  const [commentBody, setCommentBody] = useState('')
+
+  const columns = useMemo(() => sortColumns(boardFull?.columns ?? []), [boardFull])
+  const tickets = useMemo(
+    () => sortTickets((boardFull?.tickets ?? []).filter((ticket) => !ticket.archived)),
+    [boardFull],
+  )
+  const members = boardFull?.members ?? []
+  const labels = boardFull?.labels ?? []
+  const visibleBoards = selectedWorkspaceId
+    ? boards.filter((board) => board.workspaceId === selectedWorkspaceId)
+    : boards
+
+  useEffect(() => {
+    if (!accessToken) {
+      return
+    }
+
+    localStorage.setItem(tokenStorageKey, accessToken)
+    void bootstrap(accessToken)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken])
+
+  useEffect(() => {
+    if (selectedWorkspaceId) {
+      localStorage.setItem(workspaceStorageKey, selectedWorkspaceId)
+    }
+  }, [selectedWorkspaceId])
+
+  useEffect(() => {
+    if (selectedBoardId) {
+      localStorage.setItem(boardStorageKey, selectedBoardId)
+      void loadBoard(selectedBoardId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBoardId])
+
+  useEffect(() => {
+    if (!selectedTicket || !accessToken) {
+      return
+    }
+
+    void loadComments(selectedTicket.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTicket, accessToken])
+
+  async function bootstrap(token: string) {
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const [user, workspaceList, boardList] = await Promise.all([
+        api.me(token),
+        api.listWorkspaces(token),
+        api.listBoards(token),
+      ])
+
+      setCurrentUser(user)
+      setWorkspaces(workspaceList)
+      setBoards(boardList)
+
+      const savedWorkspace = localStorage.getItem(workspaceStorageKey)
+      const workspaceId =
+        workspaceList.find((workspace) => workspace.id === savedWorkspace)?.id ??
+        workspaceList[0]?.id ??
+        ''
+
+      setSelectedWorkspaceId(workspaceId)
+
+      const savedBoard = localStorage.getItem(boardStorageKey)
+      const firstBoard =
+        boardList.find((board) => board.id === savedBoard)?.id ??
+        boardList.find((board) => board.workspaceId === workspaceId)?.id ??
+        boardList[0]?.id ??
+        ''
+
+      setSelectedBoardId(firstBoard)
+    } catch (caught) {
+      logout()
+      setError(caught instanceof Error ? caught.message : 'Could not load your session.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function refreshLists() {
+    if (!accessToken) {
+      return
+    }
+
+    const [workspaceList, boardList] = await Promise.all([
+      api.listWorkspaces(accessToken),
+      api.listBoards(accessToken),
+    ])
+    setWorkspaces(workspaceList)
+    setBoards(boardList)
+  }
+
+  async function loadBoard(boardId: string) {
+    if (!accessToken || !boardId) {
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const fullBoard = await api.getBoardFull(accessToken, boardId)
+      setBoardFull(fullBoard)
+      setTicketForm((currentForm) => ({
+        ...currentForm,
+        assigneeId: currentForm.assigneeId || fullBoard.members?.[0]?.id || '',
+        columnId: currentForm.columnId || fullBoard.columns?.[0]?.id || '',
+      }))
+    } catch (caught) {
+      setBoardFull(null)
+      setError(caught instanceof Error ? caught.message : 'Could not load the board.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function loadComments(ticketId: UUID) {
+    if (!accessToken) {
+      return
+    }
+
+    try {
+      setComments(await api.listComments(accessToken, ticketId))
+    } catch {
+      setComments([])
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem(tokenStorageKey)
+    localStorage.removeItem(boardStorageKey)
+    localStorage.removeItem(workspaceStorageKey)
+    setAccessToken('')
+    setCurrentUser(null)
+    setWorkspaces([])
+    setBoards([])
+    setSelectedWorkspaceId('')
+    setSelectedBoardId('')
+    setBoardFull(null)
+    setSelectedTicket(null)
+    setTicketDraft(null)
+    setComments([])
+  }
+
+  async function submitAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setIsSaving(true)
+    setError('')
+
+    try {
+      const authResponse =
+        authMode === 'login'
+          ? await api.login({ email: authForm.email, password: authForm.password })
+          : await api.register(authForm)
+
+      if (!authResponse.accessToken) {
+        throw new Error('The backend did not return an access token.')
+      }
+
+      setCurrentUser(authResponse.user ?? null)
+      setAccessToken(authResponse.accessToken)
+      setNotice(authMode === 'login' ? 'Signed in.' : 'Account created.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Authentication failed.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function createWorkspace(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!accessToken || !currentUser || !workspaceName.trim()) {
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      const workspace = await api.createWorkspace(accessToken, workspaceName.trim(), currentUser.id)
+      setWorkspaceName('')
+      await refreshLists()
+      setSelectedWorkspaceId(workspace.id)
+      setNotice('Workspace saved.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not create workspace.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function createBoard(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!accessToken || !currentUser || !selectedWorkspaceId || !boardForm.name.trim()) {
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      const board = await api.createBoard(
+        accessToken,
+        selectedWorkspaceId,
+        boardForm.name.trim(),
+        currentUser.id,
+        boardForm.description.trim() || undefined,
+      )
+      setBoardForm({ description: '', name: '' })
+      await refreshLists()
+      setSelectedBoardId(board.id)
+      setNotice('Board saved.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not create board.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const ticketLabel = (count: number) => `${count} ${count === 1 ? 'ticket' : 'tickets'}`
 
-  function getTicketsByColumn(boardTickets: Ticket[]) {
-    return columns.reduce<Record<TicketStatus, Ticket[]>>(
-      (groupedTickets, column) => ({
-        ...groupedTickets,
-        [column.id]: boardTickets.filter(
-          (ticket) => ticket.status === column.id,
-        ),
-      }),
-      {
-        backlog: [],
-        ready: [],
-        progress: [],
-        done: [],
-      },
-    )
+  function getTicketsByColumn(boardTickets: TicketResponse[]) {
+    return columns.reduce<Record<string, TicketResponse[]>>((groupedTickets, column) => {
+      groupedTickets[column.id] = boardTickets.filter((ticket) => getTicketColumnId(ticket) === column.id)
+      return groupedTickets
+    }, {})
   }
 
-  function moveTicket(
-    ticketId: string,
-    status: TicketStatus,
-    assignee?: string,
-  ) {
-    setTickets((currentTickets) =>
-      currentTickets.map((ticket) =>
-        ticket.id === ticketId
-          ? { ...ticket, status, assignee: assignee ?? ticket.assignee }
-          : ticket,
-      ),
+  async function moveTicket(ticketId: string, destinationColumnId: string, assigneeId?: string) {
+    if (!accessToken) {
+      return
+    }
+
+    const ticket = tickets.find((currentTicket) => currentTicket.id === ticketId)
+
+    if (!ticket) {
+      return
+    }
+
+    const sourceColumnId = getTicketColumnId(ticket)
+    const destinationTickets = tickets.filter(
+      (currentTicket) => getTicketColumnId(currentTicket) === destinationColumnId,
+    )
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      let updatedTicket = await api.moveTicket(accessToken, ticketId, {
+        destinationColumnId,
+        newPosition: destinationTickets.length,
+        sourceColumnId,
+      })
+
+      if (assigneeId && !hasId(updatedTicket.assignees, assigneeId)) {
+        updatedTicket = await api.assignUser(accessToken, ticketId, assigneeId)
+      }
+
+      replaceTicket(updatedTicket)
+      await loadBoard(selectedBoardId)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not move ticket.')
+      await loadBoard(selectedBoardId)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  function replaceTicket(updatedTicket: TicketResponse) {
+    setBoardFull((currentBoard) => {
+      if (!currentBoard) {
+        return currentBoard
+      }
+
+      return {
+        ...currentBoard,
+        tickets: (currentBoard.tickets ?? []).map((ticket) =>
+          ticket.id === updatedTicket.id ? updatedTicket : ticket,
+        ),
+      }
+    })
+    setSelectedTicket((currentTicket) =>
+      currentTicket?.id === updatedTicket.id ? updatedTicket : currentTicket,
     )
   }
 
   function closeModal() {
     setIsModalOpen(false)
-    setForm(emptyForm)
+    setTicketForm({
+      ...emptyTicketForm,
+      assigneeId: members[0]?.id ?? '',
+      columnId: columns[0]?.id ?? '',
+    })
   }
 
   function closeTicketDetails() {
@@ -123,22 +467,31 @@ function App() {
     setTicketDraft(null)
     setIsEditingDescription(false)
     setDescriptionDraft('')
+    setCommentBody('')
+    setComments([])
   }
 
-  function openTicketDetails(ticket: Ticket) {
+  function openTicketDetails(ticket: TicketResponse) {
     setSelectedTicket(ticket)
-    setTicketDraft(ticket)
+    setTicketDraft(getDraftFromTicket(ticket))
     setIsEditingDescription(false)
-    setDescriptionDraft(ticket.description)
+    setDescriptionDraft(ticket.description ?? '')
+    setComments([])
   }
 
-  function startEditingDescription() {
+  function updateTicketDraft(updates: Partial<TicketDraft>) {
+    setTicketDraft((currentDraft) => (currentDraft ? { ...currentDraft, ...updates } : currentDraft))
+  }
+
+  function toggleDraftId(field: 'assigneeIds' | 'labelIds', id: string) {
     if (!ticketDraft) {
       return
     }
 
-    setDescriptionDraft(ticketDraft.description)
-    setIsEditingDescription(true)
+    const ids = ticketDraft[field]
+    updateTicketDraft({
+      [field]: ids.includes(id) ? ids.filter((currentId) => currentId !== id) : [...ids, id],
+    })
   }
 
   function saveDescription() {
@@ -146,76 +499,241 @@ function App() {
       return
     }
 
-    const description = descriptionDraft.trim()
-
-    if (!description) {
-      return
-    }
-
-    setTicketDraft({ ...ticketDraft, description })
+    setTicketDraft({ ...ticketDraft, description: descriptionDraft.trim() })
     setIsEditingDescription(false)
   }
 
-  function updateTicketDraft(updates: Partial<Ticket>) {
-    if (!ticketDraft) {
+  async function saveTicketDetails() {
+    if (!accessToken || !selectedTicket || !ticketDraft) {
       return
     }
 
-    setTicketDraft({ ...ticketDraft, ...updates })
-  }
+    setIsSaving(true)
+    setError('')
 
-  function saveTicketDetails() {
-    if (!selectedTicket || !ticketDraft) {
-      return
+    try {
+      const originalColumnId = getTicketColumnId(selectedTicket)
+      let updatedTicket = selectedTicket
+
+      if (ticketDraft.columnId && ticketDraft.columnId !== originalColumnId) {
+        updatedTicket = await api.moveTicket(accessToken, selectedTicket.id, {
+          destinationColumnId: ticketDraft.columnId,
+          newPosition: tickets.filter((ticket) => getTicketColumnId(ticket) === ticketDraft.columnId).length,
+          sourceColumnId: originalColumnId,
+        })
+      }
+
+      updatedTicket = await api.patchTicket(accessToken, selectedTicket.id, {
+        columnId: ticketDraft.columnId,
+        description: ticketDraft.description,
+        priority: ticketDraft.priority,
+        title: ticketDraft.title.trim(),
+      })
+
+      const originalAssigneeIds = selectedTicket.assignees?.map((assignee) => assignee.id) ?? []
+      const originalLabelIds = selectedTicket.labels?.map((label) => label.id) ?? []
+
+      for (const userId of ticketDraft.assigneeIds.filter((id) => !originalAssigneeIds.includes(id))) {
+        updatedTicket = await api.assignUser(accessToken, selectedTicket.id, userId)
+      }
+
+      for (const userId of originalAssigneeIds.filter((id) => !ticketDraft.assigneeIds.includes(id))) {
+        updatedTicket = await api.unassignUser(accessToken, selectedTicket.id, userId)
+      }
+
+      for (const labelId of ticketDraft.labelIds.filter((id) => !originalLabelIds.includes(id))) {
+        updatedTicket = await api.addLabel(accessToken, selectedTicket.id, labelId)
+      }
+
+      for (const labelId of originalLabelIds.filter((id) => !ticketDraft.labelIds.includes(id))) {
+        updatedTicket = await api.removeLabel(accessToken, selectedTicket.id, labelId)
+      }
+
+      replaceTicket(updatedTicket)
+      await loadBoard(selectedBoardId)
+      closeTicketDetails()
+      setNotice('Ticket saved.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not save ticket.')
+    } finally {
+      setIsSaving(false)
     }
-
-    setTickets((currentTickets) =>
-      currentTickets.map((ticket) =>
-        ticket.id === selectedTicket.id ? ticketDraft : ticket,
-      ),
-    )
-    closeTicketDetails()
   }
 
-  function createTicket(event: FormEvent<HTMLFormElement>) {
+  async function createTicket(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const title = form.title.trim()
-    const description = form.description.trim()
-    const assignee = form.assignee.trim()
-
-    if (!title || !description || !assignee) {
+    if (!accessToken || !currentUser || !selectedBoardId) {
       return
     }
 
-    const ticketNumber = nextTicketNumber
+    const title = ticketForm.title.trim()
+    const description = ticketForm.description.trim()
 
-    setTickets((currentTickets) => [
-      {
-        id: `ticket-${ticketNumber}`,
-        title,
+    if (!title || !ticketForm.columnId) {
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      let ticket = await api.createTicket(accessToken, selectedBoardId, {
+        columnId: ticketForm.columnId,
+        createdBy: currentUser.id,
         description,
-        assignee,
-        priority: form.priority,
-        status: form.status,
-      },
-      ...currentTickets,
-    ])
-    setNextTicketNumber((currentNumber) => currentNumber + 1)
-    closeModal()
+        position: tickets.filter((currentTicket) => getTicketColumnId(currentTicket) === ticketForm.columnId).length,
+        priority: ticketForm.priority,
+        title,
+      })
+
+      if (ticketForm.assigneeId) {
+        ticket = await api.assignUser(accessToken, ticket.id, ticketForm.assigneeId)
+      }
+
+      setBoardFull((currentBoard) =>
+        currentBoard
+          ? { ...currentBoard, tickets: [ticket, ...(currentBoard.tickets ?? [])] }
+          : currentBoard,
+      )
+      await loadBoard(selectedBoardId)
+      closeModal()
+      setNotice('Ticket created.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not create ticket.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  function renderBoard(
-    boardTickets: Ticket[],
-    boardId: string,
-    assignee?: string,
-  ) {
+  async function createComment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!accessToken || !currentUser || !selectedTicket || !commentBody.trim()) {
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      const comment = await api.createComment(
+        accessToken,
+        selectedTicket.id,
+        currentUser.id,
+        commentBody.trim(),
+      )
+      setComments((currentComments) => [...currentComments, comment])
+      setCommentBody('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not add comment.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  function selectWorkspace(workspaceId: string) {
+    setSelectedWorkspaceId(workspaceId)
+    const nextBoard = boards.find((board) => board.workspaceId === workspaceId)
+    setSelectedBoardId(nextBoard?.id ?? '')
+    setBoardFull(null)
+  }
+
+  function renderStatusMessage() {
+    if (error) {
+      return <div className="notification is-danger is-light">{error}</div>
+    }
+
+    if (notice) {
+      return (
+        <div className="notification is-success is-light">
+          <button className="delete" onClick={() => setNotice('')} type="button" />
+          {notice}
+        </div>
+      )
+    }
+
+    return null
+  }
+
+  function renderAuth() {
+    return (
+      <main className={`app-shell ${isDarkMode ? 'dark' : ''}`}>
+        <section className="section auth-shell">
+          <div className="auth-panel">
+            <p className="eyebrow">Alpine</p>
+            <h1 className="title is-2">{authMode === 'login' ? 'Sign in' : 'Create account'}</h1>
+            <p className="subtitle is-6">Connect to the Alpine backend and load your boards.</p>
+            {renderStatusMessage()}
+            <form onSubmit={submitAuth}>
+              {authMode === 'register' && (
+                <div className="field">
+                  <label className="label" htmlFor="auth-name">
+                    Name
+                  </label>
+                  <input
+                    className="input"
+                    id="auth-name"
+                    onChange={(event) => setAuthForm((form) => ({ ...form, name: event.target.value }))}
+                    required
+                    type="text"
+                    value={authForm.name}
+                  />
+                </div>
+              )}
+              <div className="field">
+                <label className="label" htmlFor="auth-email">
+                  Email
+                </label>
+                <input
+                  className="input"
+                  id="auth-email"
+                  onChange={(event) => setAuthForm((form) => ({ ...form, email: event.target.value }))}
+                  required
+                  type="email"
+                  value={authForm.email}
+                />
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="auth-password">
+                  Password
+                </label>
+                <input
+                  className="input"
+                  id="auth-password"
+                  minLength={8}
+                  onChange={(event) => setAuthForm((form) => ({ ...form, password: event.target.value }))}
+                  required
+                  type="password"
+                  value={authForm.password}
+                />
+              </div>
+              <div className="auth-actions">
+                <button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} type="submit">
+                  {authMode === 'login' ? 'Sign in' : 'Register'}
+                </button>
+                <button
+                  className="button is-text"
+                  onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+                  type="button"
+                >
+                  {authMode === 'login' ? 'Need an account?' : 'Have an account?'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
+  function renderBoard(boardTickets: TicketResponse[], boardId: string, assigneeId?: string) {
     const ticketsByColumn = getTicketsByColumn(boardTickets)
 
     return (
-      <div className="kanban-board">
+      <div className="kanban-board" style={{ '--column-count': columns.length || 1 } as React.CSSProperties}>
         {columns.map((column) => {
-          const columnTickets = ticketsByColumn[column.id]
+          const columnTickets = ticketsByColumn[column.id] ?? []
           const dropTargetId = `${boardId}-${column.id}`
           const isDropTarget = activeDropTarget === dropTargetId
 
@@ -231,7 +749,7 @@ function App() {
               onDrop={(event) => {
                 event.preventDefault()
                 if (draggedTicketId) {
-                  moveTicket(draggedTicketId, column.id, assignee)
+                  void moveTicket(draggedTicketId, column.id, assigneeId)
                 }
                 setDraggedTicketId(null)
                 setActiveDropTarget(null)
@@ -239,8 +757,8 @@ function App() {
             >
               <header className="column-header">
                 <div>
-                  <span className={`tag ${column.accent} is-light`}>
-                    {column.title}
+                  <span className="tag column-tag" style={{ borderColor: column.color, color: column.color }}>
+                    {column.name}
                   </span>
                   <p>{ticketLabel(columnTickets.length)}</p>
                 </div>
@@ -273,25 +791,35 @@ function App() {
                   >
                     <div className="ticket-card-header">
                       <h2 className="title is-6">{ticket.title}</h2>
-                      <span
-                        className={`tag priority-${ticket.priority.toLowerCase()}`}
-                      >
-                        {ticket.priority}
+                      <span className={`tag priority-${ticket.priority ?? 'medium'}`}>
+                        {formatPriority(ticket.priority)}
                       </span>
                     </div>
+                    {(ticket.labels?.length ?? 0) > 0 && (
+                      <div className="ticket-labels">
+                        {ticket.labels?.map((label) => (
+                          <span className="ticket-label" key={label.id} style={{ backgroundColor: label.color }}>
+                            {label.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <footer>
                       <div className="assignee-info">
-                        <div className="profile-pic" style={{ backgroundColor: getProfileColor(ticket.assignee) }}>{getInitials(ticket.assignee)}</div>
-                        <span>{ticket.assignee}</span>
+                        <div
+                          className="profile-pic"
+                          style={{ backgroundColor: getProfileColor(getFirstAssigneeName(ticket)) }}
+                        >
+                          {getInitials(getFirstAssigneeName(ticket))}
+                        </div>
+                        <span>{getFirstAssigneeName(ticket)}</span>
                       </div>
-                      <span>{ticket.id.replace('ticket-', '#')}</span>
+                      <span>#{ticket.id.slice(0, 8)}</span>
                     </footer>
                   </article>
                 ))}
 
-                {columnTickets.length === 0 && (
-                  <div className="empty-column">Drop a ticket here</div>
-                )}
+                {columnTickets.length === 0 && <div className="empty-column">Drop a ticket here</div>}
               </div>
             </article>
           )
@@ -300,26 +828,28 @@ function App() {
     )
   }
 
+  if (!accessToken) {
+    return renderAuth()
+  }
+
   return (
     <main className={`app-shell ${isDarkMode ? 'dark' : ''}`}>
       <section className="section board-header">
         <div>
           <p className="eyebrow">Product operations</p>
-          <h1 className="title is-2">Ticket tracker</h1>
+          <h1 className="title is-2">{boardFull?.board?.name ?? 'Ticket tracker'}</h1>
           <p className="subtitle is-6">
-            Plan, hand off, and complete work across a simple four-step board.
+            {boardFull?.board?.description || 'Plan, hand off, and complete work across your board.'}
           </p>
         </div>
 
         <div className="board-actions">
           <button
-            className="button is-outlined is-rounded"
+            className="button is-outlined"
             onClick={() => setIsDarkMode(!isDarkMode)}
-            style={{ width: '2.5rem', height: '2.5rem', padding: 0, background: isDarkMode ? '#fff2bf' : '#2c3e50' }}
             type="button"
-            aria-label="Toggle dark mode"
           >
-            {isDarkMode ? '☀️' : '🌙'}
+            {isDarkMode ? 'Light' : 'Dark'}
           </button>
 
           <label className="split-toggle">
@@ -334,10 +864,22 @@ function App() {
             </span>
           </label>
 
+          <button className="button" onClick={logout} type="button">
+            Sign out
+          </button>
+
           <button
             className="button is-primary"
+            disabled={!selectedBoardId || columns.length === 0}
             type="button"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setTicketForm({
+                ...emptyTicketForm,
+                assigneeId: members[0]?.id ?? '',
+                columnId: columns[0]?.id ?? '',
+              })
+              setIsModalOpen(true)
+            }}
           >
             <span aria-hidden="true">+</span>
             <span>New ticket</span>
@@ -345,47 +887,117 @@ function App() {
         </div>
       </section>
 
-      <section className="section board-section" aria-label="Kanban board">
-        {splitByUser ? (
-          <div className="user-board-stack">
-            {mockUsers.map((user) => {
-              const userTickets = tickets.filter(
-                (ticket) => ticket.assignee === user.name,
-              )
+      <section className="section board-section">
+        {renderStatusMessage()}
 
-              return (
-                <section className="user-board-section" key={user.id}>
-                  <div className="user-divider">
-                    <div>
-                      <h2>{user.name}</h2>
-                      <p>{user.role}</p>
-                    </div>
-                    <span>{ticketLabel(userTickets.length)}</span>
-                  </div>
-                  {renderBoard(userTickets, user.id, user.name)}
-                </section>
-              )
-            })}
-          </div>
-        ) : (
-          renderBoard(tickets, 'all')
-        )}
+        <div className="project-controls">
+          <section className="project-list" aria-label="Workspaces">
+            <div className="project-list-header">
+              <h2>Workspaces</h2>
+            </div>
+            <div className="button-list">
+              {workspaces.map((workspace) => (
+                <button
+                  className={`button project-button ${workspace.id === selectedWorkspaceId ? 'is-primary' : ''}`}
+                  key={workspace.id}
+                  onClick={() => selectWorkspace(workspace.id)}
+                  type="button"
+                >
+                  {workspace.name}
+                </button>
+              ))}
+            </div>
+            <form className="inline-form" onSubmit={createWorkspace}>
+              <input
+                className="input"
+                onChange={(event) => setWorkspaceName(event.target.value)}
+                placeholder="New workspace"
+                value={workspaceName}
+              />
+              <button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit">
+                Add
+              </button>
+            </form>
+          </section>
+
+          <section className="project-list" aria-label="Boards">
+            <div className="project-list-header">
+              <h2>Boards</h2>
+            </div>
+            <div className="button-list">
+              {visibleBoards.map((board) => (
+                <button
+                  className={`button project-button ${board.id === selectedBoardId ? 'is-primary' : ''}`}
+                  key={board.id}
+                  onClick={() => setSelectedBoardId(board.id)}
+                  type="button"
+                >
+                  {board.name}
+                </button>
+              ))}
+            </div>
+            <form className="inline-form board-create-form" onSubmit={createBoard}>
+              <input
+                className="input"
+                onChange={(event) => setBoardForm((form) => ({ ...form, name: event.target.value }))}
+                placeholder="New board"
+                value={boardForm.name}
+              />
+              <input
+                className="input"
+                onChange={(event) => setBoardForm((form) => ({ ...form, description: event.target.value }))}
+                placeholder="Description"
+                value={boardForm.description}
+              />
+              <button className={`button ${isSaving ? 'is-loading' : ''}`} disabled={!selectedWorkspaceId} type="submit">
+                Add
+              </button>
+            </form>
+          </section>
+        </div>
       </section>
+
+      <section className="section board-section" aria-label="Kanban board">
+        {isLoading && <progress className="progress is-small is-primary" max="100" />}
+        {!isLoading && selectedBoardId && columns.length === 0 && (
+          <div className="empty-board">This board has no columns yet. Add columns from the backend to start using it.</div>
+        )}
+        {!isLoading && !selectedBoardId && (
+          <div className="empty-board">Choose or create a board to load its tickets.</div>
+        )}
+        {!isLoading &&
+          selectedBoardId &&
+          columns.length > 0 &&
+          (splitByUser ? (
+            <div className="user-board-stack">
+              {members.map((member) => {
+                const userTickets = tickets.filter((ticket) => hasId(ticket.assignees, member.id))
+
+                return (
+                  <section className="user-board-section" key={member.id}>
+                    <div className="user-divider">
+                      <div>
+                        <h2>{member.name}</h2>
+                        <p>{member.role}</p>
+                      </div>
+                      <span>{ticketLabel(userTickets.length)}</span>
+                    </div>
+                    {renderBoard(userTickets, member.id, member.id)}
+                  </section>
+                )
+              })}
+            </div>
+          ) : (
+            renderBoard(tickets, 'all')
+          ))}
+      </section>
+
       <div className={`modal ${isModalOpen ? 'is-active' : ''}`}>
-        <div
-          className="modal-background"
-          onClick={closeModal}
-          role="presentation"
-        />
+        <div className="modal-background" onClick={closeModal} role="presentation" />
         <div className="modal-card">
           <header className="modal-card-head">
             <p className="modal-card-title">Create ticket</p>
-            <button
-              aria-label="close"
-              className="delete"
-              onClick={closeModal}
-              type="button"
-            />
+            <button aria-label="close" className="delete" onClick={closeModal} type="button" />
           </header>
 
           <form onSubmit={createTicket}>
@@ -398,15 +1010,10 @@ function App() {
                   <input
                     className="input"
                     id="ticket-title"
-                    onChange={(event) =>
-                      setForm((currentForm) => ({
-                        ...currentForm,
-                        title: event.target.value,
-                      }))
-                    }
+                    onChange={(event) => setTicketForm((form) => ({ ...form, title: event.target.value }))}
                     required
                     type="text"
-                    value={form.title}
+                    value={ticketForm.title}
                   />
                 </div>
               </div>
@@ -419,15 +1026,9 @@ function App() {
                   <textarea
                     className="textarea"
                     id="ticket-description"
-                    onChange={(event) =>
-                      setForm((currentForm) => ({
-                        ...currentForm,
-                        description: event.target.value,
-                      }))
-                    }
-                    required
+                    onChange={(event) => setTicketForm((form) => ({ ...form, description: event.target.value }))}
                     rows={3}
-                    value={form.description}
+                    value={ticketForm.description}
                   />
                 </div>
               </div>
@@ -437,26 +1038,19 @@ function App() {
                   <label className="label" htmlFor="ticket-assignee">
                     Assignee
                   </label>
-                  <div className="control">
-                    <div className="select is-fullwidth">
-                      <select
-                        id="ticket-assignee"
-                        onChange={(event) =>
-                          setForm((currentForm) => ({
-                            ...currentForm,
-                            assignee: event.target.value,
-                          }))
-                        }
-                        required
-                        value={form.assignee}
-                      >
-                        {mockUsers.map((user) => (
-                          <option key={user.id} value={user.name}>
-                            {user.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="select is-fullwidth">
+                    <select
+                      id="ticket-assignee"
+                      onChange={(event) => setTicketForm((form) => ({ ...form, assigneeId: event.target.value }))}
+                      value={ticketForm.assigneeId}
+                    >
+                      <option value="">Unassigned</option>
+                      {members.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -464,56 +1058,47 @@ function App() {
                   <label className="label" htmlFor="ticket-priority">
                     Priority
                   </label>
-                  <div className="control">
-                    <div className="select is-fullwidth">
-                      <select
-                        id="ticket-priority"
-                        onChange={(event) =>
-                          setForm((currentForm) => ({
-                            ...currentForm,
-                            priority: event.target.value as TicketPriority,
-                          }))
-                        }
-                        value={form.priority}
-                      >
-                        <option>Low</option>
-                        <option>Medium</option>
-                        <option>High</option>
-                      </select>
-                    </div>
+                  <div className="select is-fullwidth">
+                    <select
+                      id="ticket-priority"
+                      onChange={(event) =>
+                        setTicketForm((form) => ({ ...form, priority: event.target.value as ApiPriority }))
+                      }
+                      value={ticketForm.priority}
+                    >
+                      {priorityOptions.map((priority) => (
+                        <option key={priority} value={priority}>
+                          {formatPriority(priority)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 <div className="field">
-                  <label className="label" htmlFor="ticket-status">
+                  <label className="label" htmlFor="ticket-column">
                     Column
                   </label>
-                  <div className="control">
-                    <div className="select is-fullwidth">
-                      <select
-                        id="ticket-status"
-                        onChange={(event) =>
-                          setForm((currentForm) => ({
-                            ...currentForm,
-                            status: event.target.value as TicketStatus,
-                          }))
-                        }
-                        value={form.status}
-                      >
-                        {columns.map((column) => (
-                          <option key={column.id} value={column.id}>
-                            {column.title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="select is-fullwidth">
+                    <select
+                      id="ticket-column"
+                      onChange={(event) => setTicketForm((form) => ({ ...form, columnId: event.target.value }))}
+                      required
+                      value={ticketForm.columnId}
+                    >
+                      {columns.map((column) => (
+                        <option key={column.id} value={column.id}>
+                          {column.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
             </section>
 
             <footer className="modal-card-foot">
-              <button className="button is-primary" type="submit">
+              <button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} type="submit">
                 Create ticket
               </button>
               <button className="button" onClick={closeModal} type="button">
@@ -525,39 +1110,29 @@ function App() {
       </div>
 
       <div className={`modal ${selectedTicket ? 'is-active' : ''}`}>
-        <div
-          className="modal-background"
-          onClick={closeTicketDetails}
-          role="presentation"
-        />
-        <div className="modal-card">
+        <div className="modal-background" onClick={closeTicketDetails} role="presentation" />
+        <div className="modal-card ticket-modal">
           <header className="modal-card-head">
             <div>
               <p className="modal-card-title">Ticket details</p>
-              {selectedTicket && (
-                <p className="modal-card-subtitle">
-                  {selectedTicket.id.replace('ticket-', '#')}
-                </p>
-              )}
+              {selectedTicket && <p className="modal-card-subtitle">#{selectedTicket.id.slice(0, 8)}</p>}
             </div>
-            <button
-              aria-label="close"
-              className="delete"
-              onClick={closeTicketDetails}
-              type="button"
-            />
+            <button aria-label="close" className="delete" onClick={closeTicketDetails} type="button" />
           </header>
 
           {selectedTicket && ticketDraft && (
             <>
               <section className="modal-card-body">
-                <div className="ticket-detail-header">
-                  <h2 className="title is-4">{ticketDraft.title}</h2>
-                  <span
-                    className={`tag priority-${ticketDraft.priority.toLowerCase()}`}
-                  >
-                    {ticketDraft.priority}
-                  </span>
+                <div className="field">
+                  <label className="label" htmlFor="detail-title">
+                    Title
+                  </label>
+                  <input
+                    className="input"
+                    id="detail-title"
+                    onChange={(event) => updateTicketDraft({ title: event.target.value })}
+                    value={ticketDraft.title}
+                  />
                 </div>
 
                 <div className="ticket-detail-section">
@@ -567,26 +1142,20 @@ function App() {
                       <textarea
                         aria-label="Ticket description"
                         className="textarea"
-                        onChange={(event) =>
-                          setDescriptionDraft(event.target.value)
-                        }
+                        onChange={(event) => setDescriptionDraft(event.target.value)}
                         rows={4}
                         value={descriptionDraft}
                       />
                       <div className="description-actions">
-                        <button
-                          className="button is-primary"
-                          onClick={saveDescription}
-                          type="button"
-                        >
+                        <button className="button is-primary" onClick={saveDescription} type="button">
                           Save
                         </button>
-	                        <button
-	                          className="button"
-	                          onClick={() => {
-	                            setDescriptionDraft(ticketDraft.description)
-	                            setIsEditingDescription(false)
-	                          }}
+                        <button
+                          className="button"
+                          onClick={() => {
+                            setDescriptionDraft(ticketDraft.description)
+                            setIsEditingDescription(false)
+                          }}
                           type="button"
                         >
                           Cancel
@@ -596,47 +1165,30 @@ function App() {
                   ) : (
                     <button
                       className="ticket-detail-description"
-                      onClick={startEditingDescription}
+                      onClick={() => {
+                        setDescriptionDraft(ticketDraft.description)
+                        setIsEditingDescription(true)
+                      }}
                       type="button"
-	                    >
-	                      {ticketDraft.description}
-	                    </button>
+                    >
+                      {ticketDraft.description || 'Add a description'}
+                    </button>
                   )}
                 </div>
 
                 <div className="detail-grid">
                   <div>
-                    <p className="detail-label">Assignee</p>
-                    <div className="select is-fullwidth detail-select">
-                      <select
-	                        aria-label="Ticket assignee"
-	                        onChange={(event) =>
-	                          updateTicketDraft({ assignee: event.target.value })
-	                        }
-	                        value={ticketDraft.assignee}
-                      >
-                        {mockUsers.map((user) => (
-                          <option key={user.id} value={user.name}>
-                            {user.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div>
                     <p className="detail-label">Priority</p>
                     <div className="select is-fullwidth detail-select">
                       <select
-	                        aria-label="Ticket priority"
-	                        onChange={(event) =>
-	                          updateTicketDraft({
-	                            priority: event.target.value as TicketPriority,
-	                          })
-	                        }
-	                        value={ticketDraft.priority}
+                        aria-label="Ticket priority"
+                        onChange={(event) => updateTicketDraft({ priority: event.target.value as ApiPriority })}
+                        value={ticketDraft.priority}
                       >
                         {priorityOptions.map((priority) => (
-                          <option key={priority}>{priority}</option>
+                          <option key={priority} value={priority}>
+                            {formatPriority(priority)}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -645,32 +1197,86 @@ function App() {
                     <p className="detail-label">Column</p>
                     <div className="select is-fullwidth detail-select">
                       <select
-	                        aria-label="Ticket column"
-	                        onChange={(event) =>
-	                          updateTicketDraft({
-	                            status: event.target.value as TicketStatus,
-	                          })
-	                        }
-	                        value={ticketDraft.status}
+                        aria-label="Ticket column"
+                        onChange={(event) => updateTicketDraft({ columnId: event.target.value })}
+                        value={ticketDraft.columnId}
                       >
                         {columns.map((column) => (
                           <option key={column.id} value={column.id}>
-                            {column.title}
+                            {column.name}
                           </option>
                         ))}
                       </select>
                     </div>
                   </div>
                 </div>
+
+                <div className="ticket-detail-section">
+                  <p className="detail-label">Assignees</p>
+                  <div className="choice-grid">
+                    {members.map((member) => (
+                      <label className="choice-pill" key={member.id}>
+                        <input
+                          checked={ticketDraft.assigneeIds.includes(member.id)}
+                          onChange={() => toggleDraftId('assigneeIds', member.id)}
+                          type="checkbox"
+                        />
+                        <span>{member.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ticket-detail-section">
+                  <p className="detail-label">Labels</p>
+                  <div className="choice-grid">
+                    {labels.map((label: LabelResponse) => (
+                      <label className="choice-pill" key={label.id}>
+                        <input
+                          checked={ticketDraft.labelIds.includes(label.id)}
+                          onChange={() => toggleDraftId('labelIds', label.id)}
+                          type="checkbox"
+                        />
+                        <span className="label-swatch" style={{ backgroundColor: label.color }} />
+                        <span>{label.name}</span>
+                      </label>
+                    ))}
+                    {labels.length === 0 && <p className="muted-copy">No labels are available for this board.</p>}
+                  </div>
+                </div>
+
+                <div className="ticket-detail-section">
+                  <p className="detail-label">Comments</p>
+                  <div className="comment-list">
+                    {comments.map((comment) => (
+                      <article className="comment-item" key={comment.id}>
+                        <strong>{comment.authorName}</strong>
+                        <p>{comment.body}</p>
+                      </article>
+                    ))}
+                    {comments.length === 0 && <p className="muted-copy">No comments yet.</p>}
+                  </div>
+                  <form className="comment-form" onSubmit={createComment}>
+                    <textarea
+                      className="textarea"
+                      onChange={(event) => setCommentBody(event.target.value)}
+                      placeholder="Add a comment"
+                      rows={2}
+                      value={commentBody}
+                    />
+                    <button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit">
+                      Comment
+                    </button>
+                  </form>
+                </div>
               </section>
 
               <footer className="modal-card-foot">
-                <button
-	                  className="button is-primary"
-	                  onClick={saveTicketDetails}
-	                  type="button"
-                >
-                  Done
+                <button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} onClick={saveTicketDetails} type="button">
+                  Save
+                </button>
+                <button className="button" onClick={closeTicketDetails} type="button">
+                  Cancel
                 </button>
               </footer>
             </>
