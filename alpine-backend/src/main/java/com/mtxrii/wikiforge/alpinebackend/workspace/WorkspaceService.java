@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.common.ApiException;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceMemberRequest;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceMemberResponse;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspacePatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceRequest;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -88,7 +90,13 @@ public class WorkspaceService extends JdbcSupport {
     public List<WorkspaceMemberResponse> addMember(UUID workspaceId, WorkspaceMemberRequest request) {
         get(workspaceId);
         requireUser(request.userId());
-        String role = request.role() != null && !request.role().isBlank() ? request.role() : "member";
+        String role = "member";
+        if (request.role() != null && !request.role().isBlank()) {
+            role = request.role().toLowerCase();
+            if (!role.equals("owner") && !role.equals("admin") && !role.equals("member")) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid role: " + request.role() + ". Allowed roles: owner, admin, member");
+            }
+        }
         jdbc.update("""
                 INSERT INTO workspace_members (workspace_id, user_id, role)
                 VALUES (:workspaceId, :userId, :role)
