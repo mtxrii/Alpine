@@ -1068,13 +1068,15 @@ function App() {
               <button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit">
                 Add column
               </button>
-              <button
-                className={`button is-outlined ${isSaving ? 'is-loading' : ''}`}
-                onClick={() => void createStarterColumns()}
-                type="button"
-              >
-                Add starter columns
-              </button>
+              {columns.length === 0 && (
+                <button
+                  className={`button is-outlined ${isSaving ? 'is-loading' : ''}`}
+                  onClick={() => void createStarterColumns()}
+                  type="button"
+                >
+                  Add starter columns
+                </button>
+              )}
             </form>
           </section>
         )}
