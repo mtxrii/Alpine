@@ -3,6 +3,7 @@
   background:
     linear-gradient(180deg, rgba(246, 248, 251, 0.94), rgba(238, 242, 247, 0.94)),
     #f4f7fb;
+  color-scheme: light;
 }
 
 .app-shell.dark {
@@ -10,6 +11,7 @@
     linear-gradient(180deg, #1e293b, #0f172a),
     #0f172a;
   color: #f8fafc;
+  color-scheme: dark;
 }
 
 .app-shell.dark .board-header .title {
@@ -174,85 +176,31 @@
   color: #94a3b8;
 }
 
-.app-shell.dark .column-tools .input {
+.app-shell.dark .input,
+.app-shell.dark .textarea,
+.app-shell.dark .select select {
   background: #334155;
   border-color: #475569;
   color: #f1f5f9;
 }
 
-
-.app-shell.dark .modal-card-head {
-  border-bottom: 1px solid #334155;
-  box-shadow: none;
-}
-
-.app-shell.dark .modal-card-foot {
-  border-top: 1px solid #334155;
-}
-
-.app-shell.dark .modal-card-subtitle {
-  color: #94a3b8;
-}
-
-.app-shell.dark .ticket-detail-header .title {
-  color: #f1f5f9;
-}
-
-.app-shell.dark .ticket-detail-section {
-  border-bottom-color: #334155;
-}
-
-.app-shell.dark .detail-label {
-  color: #94a3b8;
-}
-
-.app-shell.dark .detail-grid p:not(.detail-label) {
-  color: #f1f5f9;
-}
-
-.app-shell.dark .modal .input,
-.app-shell.dark .modal .textarea,
-.app-shell.dark .modal .select select {
-  background: #334155;
-  border-color: #475569;
-  color: #f1f5f9;
-}
-
-.app-shell.dark .modal .input:focus,
-.app-shell.dark .modal .textarea:focus,
-.app-shell.dark .modal .select select:focus {
+.app-shell.dark .input:focus,
+.app-shell.dark .textarea:focus,
+.app-shell.dark .select select:focus {
   border-color: #26c6ae;
 }
 
-.app-shell.dark .modal .delete {
-  background: #334155;
-}
-
-.app-shell.dark .modal .delete::before,
-.app-shell.dark .modal .delete::after {
-  background-color: #94a3b8;
-}
-
-.app-shell.dark .modal .button:not(.is-primary) {
+.app-shell.dark .button:not(.is-primary),
+.app-shell.dark .project-button:not(.is-primary) {
   background: #334155;
   border-color: #475569;
   color: #e2e8f0;
 }
 
-.app-shell.dark .modal .button:not(.is-primary):hover {
+.app-shell.dark .button:not(.is-primary):hover,
+.app-shell.dark .project-button:not(.is-primary):hover {
   border-color: #64748b;
   color: #f8fafc;
-}
-
-.app-shell.dark .ticket-detail-description {
-  background: #1e293b;
-  color: #e2e8f0;
-}
-
-.app-shell.dark .ticket-detail-description:hover,
-.app-shell.dark .ticket-detail-description:focus-visible {
-  background: #334155;
-  border-color: #475569;
 }
 
 .board-header {
@@ -822,9 +770,9 @@
   font-size: 0.92rem;
 }
 
-.modal .input,
-.modal .textarea,
-.modal .select select {
+.input,
+.textarea,
+.select select {
   background: #ffffff;
   border-color: #d9e0ea;
   border-radius: 8px;
@@ -832,9 +780,9 @@
   color: #172033;
 }
 
-.modal .input:focus,
-.modal .textarea:focus,
-.modal .select select:focus {
+.input:focus,
+.textarea:focus,
+.select select:focus {
   border-color: #26c6ae;
   box-shadow: 0 0 0 0.125em rgba(38, 198, 174, 0.16);
 }
@@ -848,19 +796,23 @@
   background-color: #526071;
 }
 
-.modal .button {
+.button,
+.project-button {
   border-radius: 8px;
 }
 
-.modal .button:not(.is-primary) {
+.button:not(.is-primary),
+.project-button:not(.is-primary) {
   background: #ffffff;
   border-color: #d9e0ea;
   color: #526071;
 }
 
-.modal .button:not(.is-primary):hover {
+.button:not(.is-primary):hover,
+.project-button:not(.is-primary):hover {
   border-color: #bdc7d5;
   color: #172033;
+  background: #ffffff;
 }
 
 .ticket-detail-header {
