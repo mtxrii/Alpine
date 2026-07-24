@@ -3,6 +3,8 @@ import type {
   AuthResponse,
   BoardFullResponse,
   BoardResponse,
+  ColumnRequest,
+  ColumnResponse,
   CommentResponse,
   LoginRequest,
   MoveTicketRequest,
@@ -99,6 +101,13 @@ export const api = {
   },
   getBoardFull(token: string, boardId: UUID) {
     return request<BoardFullResponse>(`/boards/${boardId}/full`, { token })
+  },
+  createColumn(token: string, boardId: UUID, body: ColumnRequest) {
+    return request<ColumnResponse>(`/boards/${boardId}/columns`, {
+      body,
+      method: 'POST',
+      token,
+    })
   },
   createTicket(token: string, boardId: UUID, body: TicketRequest) {
     return request<TicketResponse>(`/boards/${boardId}/tickets`, {

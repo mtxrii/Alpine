@@ -156,6 +156,30 @@
   border-color: #475569;
 }
 
+.app-shell.dark .project-list,
+.app-shell.dark .column-tools,
+.app-shell.dark .empty-board {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.app-shell.dark .project-list-header h2,
+.app-shell.dark .column-tools h2,
+.app-shell.dark .empty-board h2 {
+  color: #f8fafc;
+}
+
+.app-shell.dark .column-tools p,
+.app-shell.dark .empty-board p {
+  color: #94a3b8;
+}
+
+.app-shell.dark .column-tools .input {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
 
 .app-shell.dark .modal-card-head {
   border-bottom: 1px solid #334155;
@@ -410,13 +434,84 @@
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) auto;
 }
 
+.column-tools {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid #dfe5ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(180px, 0.6fr) minmax(0, 1fr);
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+}
+
+.column-tools h2 {
+  color: #172033;
+  font-size: 0.92rem;
+  font-weight: 800;
+  margin: 0 0 0.15rem;
+  text-transform: uppercase;
+}
+
+.column-tools p {
+  color: #697386;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.column-create-form {
+  grid-template-columns: minmax(160px, 1fr) auto auto auto;
+}
+
+.color-control {
+  align-items: center;
+  border: 1px solid #d9e0ea;
+  border-radius: 8px;
+  display: flex;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.color-control input {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  height: 1.6rem;
+  padding: 0;
+  width: 1.9rem;
+}
+
+.color-preview {
+  border-radius: 50%;
+  display: inline-block;
+  height: 0.85rem;
+  width: 0.85rem;
+}
+
 .empty-board {
+  align-items: center;
   background: rgba(255, 255, 255, 0.86);
   border: 1px dashed #bdc7d5;
   border-radius: 8px;
   color: #697386;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   padding: 2rem;
   text-align: center;
+}
+
+.empty-board h2 {
+  color: #172033;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.empty-board p {
+  color: #697386;
+  margin: 0;
 }
 
 .kanban-board {
@@ -952,6 +1047,7 @@
 
   .kanban-board,
   .project-controls,
+  .column-tools,
   .detail-grid,
   .form-grid {
     grid-template-columns: 1fr;
@@ -959,6 +1055,7 @@
 
   .inline-form,
   .board-create-form,
+  .column-create-form,
   .comment-form {
     grid-template-columns: 1fr;
   }

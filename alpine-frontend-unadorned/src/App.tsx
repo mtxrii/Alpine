@@ -39,6 +39,12 @@ const boardStorageKey = 'alpine.boardId'
 const workspaceStorageKey = 'alpine.workspaceId'
 
 const priorityOptions: ApiPriority[] = ['low', 'medium', 'high', 'urgent']
+const starterColumns = [
+  { color: '#3273dc', name: 'Backlog' },
+  { color: '#3b82f6', name: 'In Progress' },
+  { color: '#f59e0b', name: 'In Review' },
+  { color: '#23d160', name: 'Done' },
+]
 const profileColors = [
   '#26c6ae',
   '#3b82f6',
@@ -158,6 +164,7 @@ function App() {
   const [ticketForm, setTicketForm] = useState<TicketForm>(emptyTicketForm)
   const [workspaceName, setWorkspaceName] = useState('')
   const [boardForm, setBoardForm] = useState({ description: '', name: '' })
+  const [columnForm, setColumnForm] = useState({ color: starterColumns[0].color, name: '' })
   const [comments, setComments] = useState<CommentResponse[]>([])
   const [commentBody, setCommentBody] = useState('')
 
@@ -386,6 +393,85 @@ function App() {
     }
   }
 
+  async function createColumn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!accessToken || !selectedBoardId || !columnForm.name.trim()) {
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      const column = await api.createColumn(accessToken, selectedBoardId, {
+        color: columnForm.color,
+        name: columnForm.name.trim(),
+        position: columns.length + 1,
+      })
+
+      setBoardFull((currentBoard) =>
+        currentBoard
+          ? {
+              ...currentBoard,
+              columns: sortColumns([...(currentBoard.columns ?? []), column]),
+            }
+          : currentBoard,
+      )
+      setTicketForm((currentForm) => ({
+        ...currentForm,
+        columnId: currentForm.columnId || column.id,
+      }))
+      setColumnForm({ color: starterColumns[0].color, name: '' })
+      setNotice('Column added.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not create column.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function createStarterColumns() {
+    if (!accessToken || !selectedBoardId) {
+      return
+    }
+
+    setIsSaving(true)
+    setError('')
+
+    try {
+      const createdColumns: ColumnResponse[] = []
+
+      for (const [index, column] of starterColumns.entries()) {
+        createdColumns.push(
+          await api.createColumn(accessToken, selectedBoardId, {
+            ...column,
+            position: columns.length + index + 1,
+          }),
+        )
+      }
+
+      setBoardFull((currentBoard) =>
+        currentBoard
+          ? {
+              ...currentBoard,
+              columns: sortColumns([...(currentBoard.columns ?? []), ...createdColumns]),
+            }
+          : currentBoard,
+      )
+      setTicketForm((currentForm) => ({
+        ...currentForm,
+        columnId: currentForm.columnId || createdColumns[0]?.id || '',
+      }))
+      setNotice('Starter columns added.')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not create starter columns.')
+      await loadBoard(selectedBoardId)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const ticketLabel = (count: number) => `${count} ${count === 1 ? 'ticket' : 'tickets'}`
 
   function getTicketsByColumn(boardTickets: TicketResponse[]) {
@@ -417,7 +503,7 @@ function App() {
     try {
       let updatedTicket = await api.moveTicket(accessToken, ticketId, {
         destinationColumnId,
-        newPosition: destinationTickets.length,
+        newPosition: destinationTickets.length + 1,
         sourceColumnId,
       })
 
@@ -518,7 +604,7 @@ function App() {
       if (ticketDraft.columnId && ticketDraft.columnId !== originalColumnId) {
         updatedTicket = await api.moveTicket(accessToken, selectedTicket.id, {
           destinationColumnId: ticketDraft.columnId,
-          newPosition: tickets.filter((ticket) => getTicketColumnId(ticket) === ticketDraft.columnId).length,
+          newPosition: tickets.filter((ticket) => getTicketColumnId(ticket) === ticketDraft.columnId).length + 1,
           sourceColumnId: originalColumnId,
         })
       }
@@ -582,7 +668,8 @@ function App() {
         columnId: ticketForm.columnId,
         createdBy: currentUser.id,
         description,
-        position: tickets.filter((currentTicket) => getTicketColumnId(currentTicket) === ticketForm.columnId).length,
+        position:
+          tickets.filter((currentTicket) => getTicketColumnId(currentTicket) === ticketForm.columnId).length + 1,
         priority: ticketForm.priority,
         title,
       })
@@ -955,12 +1042,58 @@ function App() {
             </form>
           </section>
         </div>
+
+        {selectedBoardId && (
+          <section className="column-tools" aria-label="Columns">
+            <div>
+              <h2>Columns</h2>
+              <p>{columns.length === 0 ? 'Create lanes before adding tickets.' : `${columns.length} lanes on this board.`}</p>
+            </div>
+            <form className="inline-form column-create-form" onSubmit={createColumn}>
+              <input
+                className="input"
+                onChange={(event) => setColumnForm((form) => ({ ...form, name: event.target.value }))}
+                placeholder="New column"
+                value={columnForm.name}
+              />
+              <div className="color-control">
+                <span className="color-preview" style={{ backgroundColor: columnForm.color }} />
+                <input
+                  aria-label="Column color"
+                  onChange={(event) => setColumnForm((form) => ({ ...form, color: event.target.value }))}
+                  type="color"
+                  value={columnForm.color}
+                />
+              </div>
+              <button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit">
+                Add column
+              </button>
+              <button
+                className={`button is-outlined ${isSaving ? 'is-loading' : ''}`}
+                onClick={() => void createStarterColumns()}
+                type="button"
+              >
+                Add starter columns
+              </button>
+            </form>
+          </section>
+        )}
       </section>
 
       <section className="section board-section" aria-label="Kanban board">
         {isLoading && <progress className="progress is-small is-primary" max="100" />}
         {!isLoading && selectedBoardId && columns.length === 0 && (
-          <div className="empty-board">This board has no columns yet. Add columns from the backend to start using it.</div>
+          <div className="empty-board">
+            <h2>No columns yet</h2>
+            <p>Add a column above, or create a standard Kanban flow in one click.</p>
+            <button
+              className={`button is-primary ${isSaving ? 'is-loading' : ''}`}
+              onClick={() => void createStarterColumns()}
+              type="button"
+            >
+              Add starter columns
+            </button>
+          </div>
         )}
         {!isLoading && !selectedBoardId && (
           <div className="empty-board">Choose or create a board to load its tickets.</div>

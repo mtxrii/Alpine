@@ -63,6 +63,12 @@ export type ColumnResponse = {
   updatedAt?: string
 }
 
+export type ColumnRequest = {
+  name: string
+  position?: number
+  color?: string
+}
+
 export type LabelResponse = {
   id: UUID
   boardId: UUID
