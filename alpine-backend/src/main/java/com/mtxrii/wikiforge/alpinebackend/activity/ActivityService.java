@@ -5,12 +5,12 @@ import java.util.UUID;
 
 import com.mtxrii.wikiforge.alpinebackend.activity.dto.ActivityResponse;
 import com.mtxrii.wikiforge.alpinebackend.common.JdbcSupport;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class ActivityService extends JdbcSupport {
@@ -71,7 +71,7 @@ public class ActivityService extends JdbcSupport {
     private String toJson(Map<String, ?> metadata) {
         try {
             return objectMapper.writeValueAsString(metadata == null ? Map.of() : metadata);
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException("Unable to serialize activity metadata", exception);
         }
     }
