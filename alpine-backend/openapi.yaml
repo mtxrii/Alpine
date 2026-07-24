@@ -1,0 +1,1276 @@
+openapi: 3.0.3
+info:
+  title: Alpine Backend API
+  version: 1.0.0
+  description: API documentation for Alpine backend project (WikiForge / Kanban Board system).
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - name
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        name:
+          type: string
+          maxLength: 120
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        avatarUrl:
+          type: string
+          maxLength: 2048
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+        expiresIn:
+          type: integer
+          format: int64
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        avatarUrl:
+          type: string
+
+    WorkspaceRequest:
+      type: object
+      required:
+        - name
+        - ownerId
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        ownerId:
+          type: string
+          format: uuid
+
+    WorkspacePatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 120
+
+    WorkspaceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BoardRequest:
+      type: object
+      required:
+        - workspaceId
+        - name
+        - createdBy
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+        createdBy:
+          type: string
+          format: uuid
+
+    BoardPatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+
+    BoardResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspaceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BoardMemberResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+
+    BoardFullResponse:
+      type: object
+      properties:
+        board:
+          $ref: '#/components/schemas/BoardResponse'
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnResponse'
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketResponse'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardMemberResponse'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelResponse'
+
+    ColumnRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        position:
+          type: integer
+        color:
+          type: string
+          maxLength: 64
+
+    ColumnPatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        position:
+          type: integer
+        color:
+          type: string
+          maxLength: 64
+
+    ColumnResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        boardId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        position:
+          type: integer
+        color:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ReorderColumnsRequest:
+      type: object
+      required:
+        - orderedColumnIds
+      properties:
+        orderedColumnIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    LabelRequest:
+      type: object
+      required:
+        - name
+        - color
+      properties:
+        name:
+          type: string
+          maxLength: 80
+        color:
+          type: string
+          maxLength: 64
+
+    LabelPatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 80
+        color:
+          type: string
+          maxLength: 64
+
+    LabelResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        boardId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+
+    TicketRequest:
+      type: object
+      required:
+        - columnId
+        - title
+        - createdBy
+      properties:
+        columnId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 10000
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        status:
+          type: string
+          maxLength: 80
+        position:
+          type: integer
+        createdBy:
+          type: string
+          format: uuid
+        dueDate:
+          type: string
+          format: date-time
+
+    TicketPatchRequest:
+      type: object
+      properties:
+        columnId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 10000
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        status:
+          type: string
+          maxLength: 80
+        position:
+          type: integer
+        archived:
+          type: boolean
+        dueDate:
+          type: string
+          format: date-time
+
+    TicketResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        boardId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+        status:
+          type: string
+        column:
+          $ref: '#/components/schemas/ColumnSummary'
+        position:
+          type: integer
+        assignees:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSummary'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelResponse'
+        createdBy:
+          $ref: '#/components/schemas/UserSummary'
+        dueDate:
+          type: string
+          format: date-time
+        archived:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MoveTicketRequest:
+      type: object
+      required:
+        - sourceColumnId
+        - destinationColumnId
+        - newPosition
+      properties:
+        sourceColumnId:
+          type: string
+          format: uuid
+        destinationColumnId:
+          type: string
+          format: uuid
+        newPosition:
+          type: integer
+
+    AssignUserRequest:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          format: uuid
+
+    AddLabelRequest:
+      type: object
+      required:
+        - labelId
+      properties:
+        labelId:
+          type: string
+          format: uuid
+
+    CommentRequest:
+      type: object
+      required:
+        - authorId
+        - body
+      properties:
+        authorId:
+          type: string
+          format: uuid
+        body:
+          type: string
+          maxLength: 5000
+
+    CommentPatchRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          maxLength: 5000
+
+    CommentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticketId:
+          type: string
+          format: uuid
+        authorId:
+          type: string
+          format: uuid
+        authorName:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ActivityResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        boardId:
+          type: string
+          format: uuid
+        ticketId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        action:
+          type: string
+        metadata:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    ColumnSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Successful registration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/login:
+    post:
+      summary: Authenticate user & get access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /auth/me:
+    get:
+      summary: Get current authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /workspaces:
+    get:
+      summary: List workspaces
+      responses:
+        '200':
+          description: List of workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceResponse'
+    post:
+      summary: Create workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceRequest'
+      responses:
+        '200':
+          description: Created workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+
+  /workspaces/{workspaceId}:
+    get:
+      summary: Get workspace by ID
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+    patch:
+      summary: Update workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspacePatchRequest'
+      responses:
+        '200':
+          description: Updated workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+    delete:
+      summary: Delete workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Workspace deleted successfully
+
+  /boards:
+    get:
+      summary: List boards
+      responses:
+        '200':
+          description: List of boards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BoardResponse'
+    post:
+      summary: Create board
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardRequest'
+      responses:
+        '200':
+          description: Created board
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+
+  /boards/{boardId}:
+    get:
+      summary: Get board by ID
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Board details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+    patch:
+      summary: Update board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardPatchRequest'
+      responses:
+        '200':
+          description: Updated board
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+    delete:
+      summary: Delete board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Board deleted successfully
+
+  /boards/{boardId}/full:
+    get:
+      summary: Get full board details (columns, tickets, members, labels)
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Full board details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardFullResponse'
+
+  /boards/{boardId}/columns:
+    get:
+      summary: List columns for a board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of columns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ColumnResponse'
+    post:
+      summary: Create column in board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnRequest'
+      responses:
+        '200':
+          description: Created column
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnResponse'
+
+  /boards/{boardId}/columns/reorder:
+    post:
+      summary: Reorder columns in board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReorderColumnsRequest'
+      responses:
+        '200':
+          description: Reordered columns list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ColumnResponse'
+
+  /columns/{columnId}:
+    patch:
+      summary: Update column
+      parameters:
+        - name: columnId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnPatchRequest'
+      responses:
+        '200':
+          description: Updated column
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnResponse'
+    delete:
+      summary: Delete column
+      parameters:
+        - name: columnId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Column deleted successfully
+
+  /boards/{boardId}/labels:
+    post:
+      summary: Create label in board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelRequest'
+      responses:
+        '200':
+          description: Created label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelResponse'
+
+  /labels/{labelId}:
+    patch:
+      summary: Update label
+      parameters:
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelPatchRequest'
+      responses:
+        '200':
+          description: Updated label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelResponse'
+    delete:
+      summary: Delete label
+      parameters:
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Label deleted successfully
+
+  /boards/{boardId}/tickets:
+    get:
+      summary: List tickets by board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TicketResponse'
+    post:
+      summary: Create ticket in board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+      responses:
+        '200':
+          description: Created ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+
+  /tickets/{ticketId}:
+    get:
+      summary: Get ticket by ID
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+    patch:
+      summary: Update ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketPatchRequest'
+      responses:
+        '200':
+          description: Updated ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+    delete:
+      summary: Delete ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Ticket deleted successfully
+
+  /tickets/{ticketId}/move:
+    post:
+      summary: Move ticket between columns or positions
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveTicketRequest'
+      responses:
+        '200':
+          description: Moved ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+
+  /tickets/{ticketId}/assignees:
+    post:
+      summary: Assign user to ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignUserRequest'
+      responses:
+        '200':
+          description: Ticket with updated assignees
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+
+  /tickets/{ticketId}/assignees/{userId}:
+    delete:
+      summary: Unassign user from ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket with updated assignees
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+
+  /tickets/{ticketId}/labels:
+    post:
+      summary: Add label to ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddLabelRequest'
+      responses:
+        '200':
+          description: Ticket with updated labels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+
+  /tickets/{ticketId}/labels/{labelId}:
+    delete:
+      summary: Remove label from ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket with updated labels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+
+  /tickets/{ticketId}/comments:
+    get:
+      summary: List comments for ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommentResponse'
+    post:
+      summary: Create comment on ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+      responses:
+        '200':
+          description: Created comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+
+  /comments/{commentId}:
+    patch:
+      summary: Update comment
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentPatchRequest'
+      responses:
+        '200':
+          description: Updated comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+    delete:
+      summary: Delete comment
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Comment deleted successfully
+
+  /boards/{boardId}/activity:
+    get:
+      summary: List activity logs for board
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of activity logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityResponse'
+
+  /tickets/{ticketId}/activity:
+    get:
+      summary: List activity logs for ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required:
+            - true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of activity logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityResponse'
