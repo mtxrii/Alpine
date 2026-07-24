@@ -184,6 +184,12 @@
   color: #f1f5f9;
 }
 
+.app-shell.dark .input::placeholder,
+.app-shell.dark .textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
 .app-shell.dark .input:focus,
 .app-shell.dark .textarea:focus,
 .app-shell.dark .select select:focus {
@@ -778,6 +784,12 @@
   border-radius: 8px;
   box-shadow: none;
   color: #172033;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #697386;
+  opacity: 1;
 }
 
 .input:focus,
