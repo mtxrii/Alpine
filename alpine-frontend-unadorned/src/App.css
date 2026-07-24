@@ -1026,6 +1026,10 @@
   grid-template-columns: minmax(140px, 1fr) auto;
 }
 
+.member-create-form.has-role-select {
+  grid-template-columns: minmax(140px, 1fr) minmax(120px, 0.8fr) auto;
+}
+
 .app-shell.dark .workspace-members-tools {
   background: #1e293b;
   border-color: #334155;

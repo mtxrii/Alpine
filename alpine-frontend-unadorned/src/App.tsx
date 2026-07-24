@@ -40,6 +40,7 @@ const boardStorageKey = 'alpine.boardId'
 const workspaceStorageKey = 'alpine.workspaceId'
 
 const priorityOptions: ApiPriority[] = ['low', 'medium', 'high', 'urgent']
+const roleOptions = ['Member', 'Admin', 'Contributor', 'Viewer']
 const starterColumns = [
   { color: '#3273dc', name: 'Backlog' },
   { color: '#3b82f6', name: 'In Progress' },
@@ -170,6 +171,7 @@ function App() {
   const [commentBody, setCommentBody] = useState('')
   const [workspaceMembers, setWorkspaceMembers] = useState<BoardMemberResponse[]>([])
   const [selectedUserIdToAdd, setSelectedUserIdToAdd] = useState('')
+  const [selectedRoleToAdd, setSelectedRoleToAdd] = useState('Member')
   const [allUsers, setAllUsers] = useState<UserResponse[]>([])
 
   const columns = useMemo(() => sortColumns(boardFull?.columns ?? []), [boardFull])
@@ -182,6 +184,14 @@ function App() {
   const visibleBoards = selectedWorkspaceId
     ? boards.filter((board) => board.workspaceId === selectedWorkspaceId)
     : boards
+
+  const currentWorkspace = useMemo(() => {
+    return workspaces.find((w) => w.id === selectedWorkspaceId)
+  }, [workspaces, selectedWorkspaceId])
+
+  const isWorkspaceOwner = useMemo(() => {
+    return !!currentUser && !!currentWorkspace && currentWorkspace.ownerId === currentUser.id
+  }, [currentUser, currentWorkspace])
 
   const allUsersList = useMemo(() => {
     const list = [...allUsers]
@@ -348,9 +358,15 @@ function App() {
     setError('')
 
     try {
-      const membersList = await api.addWorkspaceMember(accessToken, selectedWorkspaceId, selectedUserIdToAdd)
+      const membersList = await api.addWorkspaceMember(
+        accessToken,
+        selectedWorkspaceId,
+        selectedUserIdToAdd,
+        isWorkspaceOwner ? selectedRoleToAdd : undefined,
+      )
       setWorkspaceMembers(membersList)
       setSelectedUserIdToAdd('')
+      setSelectedRoleToAdd('Member')
       if (selectedBoardId) {
         await loadBoard(selectedBoardId)
       }
@@ -1191,7 +1207,7 @@ function App() {
                 </div>
               ))}
             </div>
-            <form className="inline-form member-create-form" onSubmit={addWorkspaceMember}>
+            <form className={`inline-form member-create-form ${isWorkspaceOwner ? 'has-role-select' : ''}`} onSubmit={addWorkspaceMember}>
               <div className="select is-fullwidth">
                 <select
                   value={selectedUserIdToAdd}
@@ -1206,6 +1222,21 @@ function App() {
                   ))}
                 </select>
               </div>
+              {isWorkspaceOwner && (
+                <div className="select is-fullwidth">
+                  <select
+                    value={selectedRoleToAdd}
+                    onChange={(event) => setSelectedRoleToAdd(event.target.value)}
+                    aria-label="Select member role"
+                  >
+                    {roleOptions.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <button className={`button ${isSaving ? 'is-loading' : ''}`} disabled={!selectedUserIdToAdd} type="submit">
                 Add member
               </button>
