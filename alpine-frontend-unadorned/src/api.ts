@@ -74,6 +74,12 @@ export const api = {
   me(token: string) {
     return request<UserResponse>('/auth/me', { token })
   },
+  listUsers(token: string) {
+    return request<UserResponse[]>('/users', { token })
+  },
+  getUser(token: string, userId: UUID) {
+    return request<UserResponse>(`/users/${userId}`, { token })
+  },
   listWorkspaces(token: string) {
     return request<WorkspaceResponse[]>('/workspaces', { token })
   },

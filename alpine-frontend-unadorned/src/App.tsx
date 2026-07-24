@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api } from './api'
-import { mockUsers } from './mock/users'
 import type {
   ApiPriority,
   BoardFullResponse,
@@ -171,6 +170,7 @@ function App() {
   const [commentBody, setCommentBody] = useState('')
   const [workspaceMembers, setWorkspaceMembers] = useState<BoardMemberResponse[]>([])
   const [selectedUserIdToAdd, setSelectedUserIdToAdd] = useState('')
+  const [allUsers, setAllUsers] = useState<UserResponse[]>([])
 
   const columns = useMemo(() => sortColumns(boardFull?.columns ?? []), [boardFull])
   const tickets = useMemo(
@@ -183,22 +183,18 @@ function App() {
     ? boards.filter((board) => board.workspaceId === selectedWorkspaceId)
     : boards
 
-  const allUsers = useMemo(() => {
-    const list = [...mockUsers]
+  const allUsersList = useMemo(() => {
+    const list = [...allUsers]
     if (currentUser && !list.some((u) => u.id === currentUser.id)) {
-      list.unshift({
-        id: currentUser.id,
-        name: currentUser.name,
-        role: 'Current User',
-      })
+      list.unshift(currentUser)
     }
     return list
-  }, [currentUser])
+  }, [allUsers, currentUser])
 
   const availableUsersToAdd = useMemo(() => {
     const memberIds = workspaceMembers.map((m) => m.id)
-    return allUsers.filter((u) => !memberIds.includes(u.id))
-  }, [allUsers, workspaceMembers])
+    return allUsersList.filter((u) => !memberIds.includes(u.id))
+  }, [allUsersList, workspaceMembers])
 
   useEffect(() => {
     if (!accessToken) {
@@ -240,15 +236,17 @@ function App() {
     setError('')
 
     try {
-      const [user, workspaceList, boardList] = await Promise.all([
+      const [user, workspaceList, boardList, userList] = await Promise.all([
         api.me(token),
         api.listWorkspaces(token),
         api.listBoards(token),
+        api.listUsers(token).catch(() => [] as UserResponse[]),
       ])
 
       setCurrentUser(user)
       setWorkspaces(workspaceList)
       setBoards(boardList)
+      setAllUsers(userList)
 
       const savedWorkspace = localStorage.getItem(workspaceStorageKey)
       const workspaceId =
@@ -279,12 +277,14 @@ function App() {
       return
     }
 
-    const [workspaceList, boardList] = await Promise.all([
+    const [workspaceList, boardList, userList] = await Promise.all([
       api.listWorkspaces(accessToken),
       api.listBoards(accessToken),
+      api.listUsers(accessToken).catch(() => [] as UserResponse[]),
     ])
     setWorkspaces(workspaceList)
     setBoards(boardList)
+    setAllUsers(userList)
   }
 
   async function loadBoard(boardId: string) {
@@ -1201,7 +1201,7 @@ function App() {
                   <option value="">Select user to add...</option>
                   {availableUsersToAdd.map((user) => (
                     <option key={user.id} value={user.id}>
-                      {user.name} ({user.role || 'User'})
+                      {user.name} ({user.email})
                     </option>
                   ))}
                 </select>
