@@ -3,6 +3,8 @@ package com.mtxrii.wikiforge.alpinebackend.workspace;
 import java.util.List;
 import java.util.UUID;
 
+import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceMemberRequest;
+import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceMemberResponse;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspacePatchRequest;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceRequest;
 import com.mtxrii.wikiforge.alpinebackend.workspace.dto.WorkspaceResponse;
@@ -49,6 +51,28 @@ public class WorkspaceController {
     @DeleteMapping("/{workspaceId}")
     ResponseEntity<Void> delete(@PathVariable UUID workspaceId) {
         workspaceService.delete(workspaceId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{workspaceId}/members")
+    List<WorkspaceMemberResponse> listMembers(@PathVariable UUID workspaceId) {
+        return workspaceService.listMembers(workspaceId);
+    }
+
+    @PostMapping("/{workspaceId}/members")
+    List<WorkspaceMemberResponse> addMember(
+            @PathVariable UUID workspaceId,
+            @Valid @RequestBody WorkspaceMemberRequest request
+    ) {
+        return workspaceService.addMember(workspaceId, request);
+    }
+
+    @DeleteMapping("/{workspaceId}/members/{userId}")
+    ResponseEntity<Void> removeMember(
+            @PathVariable UUID workspaceId,
+            @PathVariable UUID userId
+    ) {
+        workspaceService.removeMember(workspaceId, userId);
         return ResponseEntity.noContent().build();
     }
 }
