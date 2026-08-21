@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { ChangeEvent, FormEvent, InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import { api } from './api'
 import type {
   ApiPriority,
@@ -76,6 +76,26 @@ const emptyTicketForm: TicketForm = {
   description: '',
   priority: 'medium',
   title: '',
+}
+
+function JellyInput({ onChange, value, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <jelly-input
+      {...props}
+      onInput={(event) => onChange?.(event as unknown as ChangeEvent<HTMLInputElement>)}
+      value={value?.toString() ?? ''}
+    />
+  )
+}
+
+function JellyTextarea({ onChange, value, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <jelly-textarea
+      {...props}
+      onInput={(event) => onChange?.(event as unknown as ChangeEvent<HTMLTextAreaElement>)}
+      value={value?.toString() ?? ''}
+    />
+  )
 }
 
 function getInitials(name: string): string {
@@ -835,7 +855,7 @@ function App() {
     if (notice) {
       return (
         <div className="notification is-success is-light">
-          <button className="delete" onClick={() => setNotice('')} type="button" />
+          <jelly-button className="delete" label="Dismiss message" onClick={() => setNotice('')} shape="square" size="small" type="button" variant="graphite">×</jelly-button>
           {notice}
         </div>
       )
@@ -860,7 +880,7 @@ function App() {
                   <label className="label" htmlFor="auth-name">
                     Name
                   </label>
-                  <input
+                  <JellyInput
                     className="input"
                     id="auth-name"
                     onChange={(event) => setAuthForm((form) => ({ ...form, name: event.target.value }))}
@@ -874,7 +894,7 @@ function App() {
                 <label className="label" htmlFor="auth-email">
                   Email
                 </label>
-                <input
+                <JellyInput
                   className="input"
                   id="auth-email"
                   onChange={(event) => setAuthForm((form) => ({ ...form, email: event.target.value }))}
@@ -887,7 +907,7 @@ function App() {
                 <label className="label" htmlFor="auth-password">
                   Password
                 </label>
-                <input
+                <JellyInput
                   className="input"
                   id="auth-password"
                   minLength={8}
@@ -898,16 +918,17 @@ function App() {
                 />
               </div>
               <div className="auth-actions">
-                <button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} type="submit">
+                <jelly-button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} type="submit" variant="azure">
                   {authMode === 'login' ? 'Sign in' : 'Register'}
-                </button>
-                <button
+                </jelly-button>
+                <jelly-button
                   className="button is-text"
                   onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
                   type="button"
+                  variant="white"
                 >
                   {authMode === 'login' ? 'Need an account?' : 'Have an account?'}
-                </button>
+                </jelly-button>
               </div>
             </form>
           </div>
@@ -1035,13 +1056,14 @@ function App() {
         </div>
 
         <div className="board-actions">
-          <button
+          <jelly-button
             className="button is-outlined"
             onClick={() => setIsDarkMode(!isDarkMode)}
             type="button"
+            variant="mint"
           >
             {isDarkMode ? 'Light' : 'Dark'}
-          </button>
+          </jelly-button>
 
           <label className="split-toggle">
             <span>Split by user</span>
@@ -1055,14 +1077,15 @@ function App() {
             </span>
           </label>
 
-          <button className="button" onClick={logout} type="button">
+          <jelly-button className="button" onClick={logout} type="button" variant="white">
             Sign out
-          </button>
+          </jelly-button>
 
-          <button
+          <jelly-button
             className="button is-primary"
             disabled={!selectedBoardId || columns.length === 0}
             type="button"
+            variant="azure"
             onClick={() => {
               setTicketForm({
                 ...emptyTicketForm,
@@ -1074,7 +1097,7 @@ function App() {
           >
             <span aria-hidden="true">+</span>
             <span>New ticket</span>
-          </button>
+          </jelly-button>
         </div>
       </section>
 
@@ -1088,26 +1111,27 @@ function App() {
             </div>
             <div className="button-list">
               {workspaces.map((workspace) => (
-                <button
+                <jelly-button
                   className={`button project-button ${workspace.id === selectedWorkspaceId ? 'is-primary' : ''}`}
                   key={workspace.id}
                   onClick={() => selectWorkspace(workspace.id)}
                   type="button"
+                  variant={workspace.id === selectedWorkspaceId ? 'azure' : 'white'}
                 >
                   {workspace.name}
-                </button>
+                </jelly-button>
               ))}
             </div>
             <form className="inline-form" onSubmit={createWorkspace}>
-              <input
+              <JellyInput
                 className="input"
                 onChange={(event) => setWorkspaceName(event.target.value)}
                 placeholder="New workspace"
                 value={workspaceName}
               />
-              <button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit">
+              <jelly-button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit" variant="white">
                 Add
-              </button>
+              </jelly-button>
             </form>
           </section>
 
@@ -1117,32 +1141,33 @@ function App() {
             </div>
             <div className="button-list">
               {visibleBoards.map((board) => (
-                <button
+                <jelly-button
                   className={`button project-button ${board.id === selectedBoardId ? 'is-primary' : ''}`}
                   key={board.id}
                   onClick={() => setSelectedBoardId(board.id)}
                   type="button"
+                  variant={board.id === selectedBoardId ? 'azure' : 'white'}
                 >
                   {board.name}
-                </button>
+                </jelly-button>
               ))}
             </div>
             <form className="inline-form board-create-form" onSubmit={createBoard}>
-              <input
+              <JellyInput
                 className="input"
                 onChange={(event) => setBoardForm((form) => ({ ...form, name: event.target.value }))}
                 placeholder="New board"
                 value={boardForm.name}
               />
-              <input
+              <JellyInput
                 className="input"
                 onChange={(event) => setBoardForm((form) => ({ ...form, description: event.target.value }))}
                 placeholder="Description"
                 value={boardForm.description}
               />
-              <button className={`button ${isSaving ? 'is-loading' : ''}`} disabled={!selectedWorkspaceId} type="submit">
+              <jelly-button className={`button ${isSaving ? 'is-loading' : ''}`} disabled={!selectedWorkspaceId} type="submit" variant="white">
                 Add
-              </button>
+              </jelly-button>
             </form>
           </section>
         </div>
@@ -1154,7 +1179,7 @@ function App() {
               <p>{columns.length === 0 ? 'Create lanes before adding tickets.' : `${columns.length} lanes on this board.`}</p>
             </div>
             <form className="inline-form column-create-form" onSubmit={createColumn}>
-              <input
+              <JellyInput
                 className="input"
                 onChange={(event) => setColumnForm((form) => ({ ...form, name: event.target.value }))}
                 placeholder="New column"
@@ -1169,17 +1194,18 @@ function App() {
                   value={columnForm.color}
                 />
               </div>
-              <button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit">
+              <jelly-button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit" variant="white">
                 Add column
-              </button>
+              </jelly-button>
               {columns.length === 0 && (
-                <button
+                <jelly-button
                   className={`button is-outlined ${isSaving ? 'is-loading' : ''}`}
                   onClick={() => void createStarterColumns()}
                   type="button"
+                  variant="mint"
                 >
                   Add starter columns
-                </button>
+                </jelly-button>
               )}
             </form>
           </section>
@@ -1201,12 +1227,16 @@ function App() {
                     <strong>{member.name}</strong>
                     <span>{member.role || 'Member'}</span>
                   </div>
-                  <button
+                  <jelly-button
                     className="delete is-small"
+                    label="Remove member"
                     onClick={() => void removeWorkspaceMember(member.id)}
+                    shape="square"
+                    size="small"
                     type="button"
                     title="Remove member"
-                  />
+                    variant="rose"
+                  >×</jelly-button>
                 </div>
               ))}
             </div>
@@ -1240,9 +1270,9 @@ function App() {
                   </select>
                 </div>
               )}
-              <button className={`button ${isSaving ? 'is-loading' : ''}`} disabled={!selectedUserIdToAdd} type="submit">
+              <jelly-button className={`button ${isSaving ? 'is-loading' : ''}`} disabled={!selectedUserIdToAdd} type="submit" variant="white">
                 Add member
-              </button>
+              </jelly-button>
             </form>
           </section>
         )}
@@ -1254,13 +1284,14 @@ function App() {
           <div className="empty-board">
             <h2>No columns yet</h2>
             <p>Add a column above, or create a standard Kanban flow in one click.</p>
-            <button
+            <jelly-button
               className={`button is-primary ${isSaving ? 'is-loading' : ''}`}
               onClick={() => void createStarterColumns()}
               type="button"
+              variant="azure"
             >
               Add starter columns
-            </button>
+            </jelly-button>
           </div>
         )}
         {!isLoading && !selectedBoardId && (
@@ -1298,7 +1329,7 @@ function App() {
         <div className="modal-card">
           <header className="modal-card-head">
             <p className="modal-card-title">Create ticket</p>
-            <button aria-label="close" className="delete" onClick={closeModal} type="button" />
+            <jelly-button className="delete" label="Close dialog" onClick={closeModal} shape="square" size="small" type="button" variant="graphite">×</jelly-button>
           </header>
 
           <form onSubmit={createTicket}>
@@ -1308,7 +1339,7 @@ function App() {
                   Title
                 </label>
                 <div className="control">
-                  <input
+                  <JellyInput
                     className="input"
                     id="ticket-title"
                     onChange={(event) => setTicketForm((form) => ({ ...form, title: event.target.value }))}
@@ -1324,7 +1355,7 @@ function App() {
                   Description
                 </label>
                 <div className="control">
-                  <textarea
+                  <JellyTextarea
                     className="textarea"
                     id="ticket-description"
                     onChange={(event) => setTicketForm((form) => ({ ...form, description: event.target.value }))}
@@ -1399,12 +1430,12 @@ function App() {
             </section>
 
             <footer className="modal-card-foot">
-              <button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} type="submit">
+              <jelly-button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} type="submit" variant="azure">
                 Create ticket
-              </button>
-              <button className="button" onClick={closeModal} type="button">
+              </jelly-button>
+              <jelly-button className="button" onClick={closeModal} type="button" variant="white">
                 Cancel
-              </button>
+              </jelly-button>
             </footer>
           </form>
         </div>
@@ -1418,7 +1449,7 @@ function App() {
               <p className="modal-card-title">Ticket details</p>
               {selectedTicket && <p className="modal-card-subtitle">#{selectedTicket.id.slice(0, 8)}</p>}
             </div>
-            <button aria-label="close" className="delete" onClick={closeTicketDetails} type="button" />
+            <jelly-button className="delete" label="Close dialog" onClick={closeTicketDetails} shape="square" size="small" type="button" variant="graphite">×</jelly-button>
           </header>
 
           {selectedTicket && ticketDraft && (
@@ -1428,7 +1459,7 @@ function App() {
                   <label className="label" htmlFor="detail-title">
                     Title
                   </label>
-                  <input
+                  <JellyInput
                     className="input"
                     id="detail-title"
                     onChange={(event) => updateTicketDraft({ title: event.target.value })}
@@ -1440,7 +1471,7 @@ function App() {
                   <p className="detail-label">Description</p>
                   {isEditingDescription ? (
                     <div className="description-editor">
-                      <textarea
+                      <JellyTextarea
                         aria-label="Ticket description"
                         className="textarea"
                         onChange={(event) => setDescriptionDraft(event.target.value)}
@@ -1448,32 +1479,34 @@ function App() {
                         value={descriptionDraft}
                       />
                       <div className="description-actions">
-                        <button className="button is-primary" onClick={saveDescription} type="button">
+                        <jelly-button className="button is-primary" onClick={saveDescription} type="button" variant="azure">
                           Save
-                        </button>
-                        <button
+                        </jelly-button>
+                        <jelly-button
                           className="button"
                           onClick={() => {
                             setDescriptionDraft(ticketDraft.description)
                             setIsEditingDescription(false)
                           }}
                           type="button"
+                          variant="white"
                         >
                           Cancel
-                        </button>
+                        </jelly-button>
                       </div>
                     </div>
                   ) : (
-                    <button
+                    <jelly-button
                       className="ticket-detail-description"
                       onClick={() => {
                         setDescriptionDraft(ticketDraft.description)
                         setIsEditingDescription(true)
                       }}
                       type="button"
+                      variant="white"
                     >
                       {ticketDraft.description || 'Add a description'}
-                    </button>
+                    </jelly-button>
                   )}
                 </div>
 
@@ -1558,27 +1591,27 @@ function App() {
                     {comments.length === 0 && <p className="muted-copy">No comments yet.</p>}
                   </div>
                   <form className="comment-form" onSubmit={createComment}>
-                    <textarea
+                    <JellyTextarea
                       className="textarea"
                       onChange={(event) => setCommentBody(event.target.value)}
                       placeholder="Add a comment"
                       rows={2}
                       value={commentBody}
                     />
-                    <button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit">
+                    <jelly-button className={`button ${isSaving ? 'is-loading' : ''}`} type="submit" variant="white">
                       Comment
-                    </button>
+                    </jelly-button>
                   </form>
                 </div>
               </section>
 
               <footer className="modal-card-foot">
-                <button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} onClick={saveTicketDetails} type="button">
+                <jelly-button className={`button is-primary ${isSaving ? 'is-loading' : ''}`} onClick={saveTicketDetails} type="button" variant="azure">
                   Save
-                </button>
-                <button className="button" onClick={closeTicketDetails} type="button">
+                </jelly-button>
+                <jelly-button className="button" onClick={closeTicketDetails} type="button" variant="white">
                   Cancel
-                </button>
+                </jelly-button>
               </footer>
             </>
           )}
