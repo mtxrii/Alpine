@@ -35,6 +35,19 @@ declare module 'react' {
         rows?: number
         value?: string
       }
+      'jelly-select': HTMLAttributes<HTMLElement> & {
+        disabled?: boolean
+        label?: string
+        placeholder?: string
+        size?: 'small' | 'medium' | 'large'
+        value?: string
+      }
+      'jelly-option': HTMLAttributes<HTMLElement> & {
+        disabled?: boolean
+        key?: string
+        selected?: boolean
+        value?: string
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { ChangeEvent, FormEvent, InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { ChangeEvent, FormEvent, HTMLAttributes, InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import { api } from './api'
 import type {
   ApiPriority,
@@ -96,6 +96,115 @@ function JellyTextarea({ onChange, value, ...props }: TextareaHTMLAttributes<HTM
       value={value?.toString() ?? ''}
     />
   )
+}
+
+function JellySelect({
+  onChange,
+  value,
+  children,
+  placeholder,
+  ...props
+}: HTMLAttributes<HTMLElement> & { placeholder?: string; value?: string; disabled?: boolean }) {
+  const ref = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    if (ref.current) {
+      if (value !== undefined && value !== null && value !== '') ref.current.setAttribute('value', value)
+      else if (value === '') ref.current.setAttribute('value', '')
+      else ref.current.removeAttribute('value')
+    }
+  }, [value])
+  useLayoutEffect(() => {
+    if (ref.current && placeholder !== undefined) ref.current.setAttribute('placeholder', placeholder)
+    else if (ref.current) ref.current.removeAttribute('placeholder')
+  }, [placeholder])
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !onChange) return
+    const handler = (e: Event) => onChange(e as unknown as ChangeEvent<HTMLSelectElement>)
+    el.addEventListener('change', handler)
+    return () => el.removeEventListener('change', handler)
+  }, [onChange])
+  return React.createElement(
+    'jelly-select' as unknown as string,
+    {
+      ref,
+      ...props,
+    } as unknown as Record<string, unknown>,
+    children,
+  )
+}
+
+function JellyOption({ value, children, ...props }: HTMLAttributes<HTMLElement> & { value?: string; disabled?: boolean; selected?: boolean }) {
+  const ref = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    if (ref.current) {
+      if (value !== undefined) ref.current.setAttribute('value', value)
+      else ref.current.removeAttribute('value')
+    }
+  }, [value])
+  return React.createElement(
+    'jelly-option' as unknown as string,
+    { ref, ...(props as unknown as Record<string, unknown>) } as unknown as Record<string, unknown>,
+    children,
+  )
+}
+
+if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  customElements.whenDefined('jelly-button').then(() => {
+    const ctor = customElements.get('jelly-button') as unknown as {
+      prototype: { surfaceBorder: () => { color: string; width: number } | null; resolveColor: (c: string) => string; __patchedBorder?: boolean }
+    }
+    if (ctor?.prototype && !ctor.prototype.__patchedBorder) {
+      ctor.prototype.__patchedBorder = true
+      ctor.prototype.surfaceBorder = function () {
+        return { color: this.resolveColor('#000'), width: 2 }
+      }
+    }
+  })
+  customElements.whenDefined('jelly-option').then(() => {
+    const ctor = customElements.get('jelly-option') as unknown as { prototype: Record<string, unknown> }
+    if (ctor?.prototype) {
+      const descValue = Object.getOwnPropertyDescriptor(ctor.prototype, 'value')
+      if (descValue && !descValue.set) {
+        Object.defineProperty(ctor.prototype, 'value', {
+          get: descValue.get,
+          set(v: string) {
+            if (v == null || v === '') this.removeAttribute('value')
+            else (this as unknown as HTMLElement).setAttribute('value', String(v))
+          },
+          configurable: true,
+        })
+      }
+      const descLabel = Object.getOwnPropertyDescriptor(ctor.prototype, 'label')
+      if (descLabel && !descLabel.set) {
+        Object.defineProperty(ctor.prototype, 'label', {
+          get: descLabel.get,
+          set(v: string) {
+            ;(this as unknown as HTMLElement).setAttribute('label', String(v ?? ''))
+          },
+          configurable: true,
+        })
+      }
+    }
+  })
+  customElements.whenDefined('jelly-select').then(() => {
+    const ctor = customElements.get('jelly-select') as unknown as { prototype: Record<string, unknown> }
+    if (ctor?.prototype) {
+      const desc = Object.getOwnPropertyDescriptor(ctor.prototype, 'value')
+      if (!desc || !desc.set) {
+        Object.defineProperty(ctor.prototype, 'value', {
+          get() {
+            return (this as unknown as HTMLElement).getAttribute('value') ?? ''
+          },
+          set(v: string) {
+            if (v == null || v === '') (this as unknown as HTMLElement).removeAttribute('value')
+            else (this as unknown as HTMLElement).setAttribute('value', String(v))
+          },
+          configurable: true,
+        })
+      }
+    }
+  })
 }
 
 function getInitials(name: string): string {
@@ -1241,34 +1350,31 @@ function App() {
               ))}
             </div>
             <form className={`inline-form member-create-form ${isWorkspaceOwner ? 'has-role-select' : ''}`} onSubmit={addWorkspaceMember}>
-              <div className="select is-fullwidth">
-                <select
-                  value={selectedUserIdToAdd}
-                  onChange={(event) => setSelectedUserIdToAdd(event.target.value)}
-                  aria-label="Select user to add"
-                >
-                  <option value="">Select user to add...</option>
-                  {availableUsersToAdd.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} ({user.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <JellySelect
+                value={selectedUserIdToAdd}
+                onChange={(event: unknown) => setSelectedUserIdToAdd((event as { target: HTMLSelectElement }).target.value)}
+                aria-label="Select user to add"
+                placeholder="Select user to add..."
+              >
+                <JellyOption value="">Select user to add...</JellyOption>
+                {availableUsersToAdd.map((user) => (
+                  <JellyOption key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </JellyOption>
+                ))}
+              </JellySelect>
               {isWorkspaceOwner && (
-                <div className="select is-fullwidth">
-                  <select
-                    value={selectedRoleToAdd}
-                    onChange={(event) => setSelectedRoleToAdd(event.target.value)}
-                    aria-label="Select member role"
-                  >
-                    {roleOptions.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <JellySelect
+                  value={selectedRoleToAdd}
+                  onChange={(event: unknown) => setSelectedRoleToAdd((event as { target: HTMLSelectElement }).target.value)}
+                  aria-label="Select member role"
+                >
+                  {roleOptions.map((role) => (
+                    <JellyOption key={role} value={role}>
+                      {role}
+                    </JellyOption>
+                  ))}
+                </JellySelect>
               )}
               <jelly-button className={`button ${isSaving ? 'is-loading' : ''}`} disabled={!selectedUserIdToAdd} type="submit" variant="white">
                 Add member
@@ -1370,61 +1476,55 @@ function App() {
                   <label className="label" htmlFor="ticket-assignee">
                     Assignee
                   </label>
-                  <div className="select is-fullwidth">
-                    <select
-                      id="ticket-assignee"
-                      onChange={(event) => setTicketForm((form) => ({ ...form, assigneeId: event.target.value }))}
-                      value={ticketForm.assigneeId}
-                    >
-                      <option value="">Unassigned</option>
-                      {members.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <JellySelect
+                    id="ticket-assignee"
+                    onChange={(event: unknown) => setTicketForm((form) => ({ ...form, assigneeId: (event as { target: HTMLSelectElement }).target.value }))}
+                    value={ticketForm.assigneeId}
+                    placeholder="Unassigned"
+                  >
+                    <JellyOption value="">Unassigned</JellyOption>
+                    {members.map((member) => (
+                      <JellyOption key={member.id} value={member.id}>
+                        {member.name}
+                      </JellyOption>
+                    ))}
+                  </JellySelect>
                 </div>
 
                 <div className="field">
                   <label className="label" htmlFor="ticket-priority">
                     Priority
                   </label>
-                  <div className="select is-fullwidth">
-                    <select
-                      id="ticket-priority"
-                      onChange={(event) =>
-                        setTicketForm((form) => ({ ...form, priority: event.target.value as ApiPriority }))
-                      }
-                      value={ticketForm.priority}
-                    >
-                      {priorityOptions.map((priority) => (
-                        <option key={priority} value={priority}>
-                          {formatPriority(priority)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <JellySelect
+                    id="ticket-priority"
+                    onChange={(event: unknown) =>
+                      setTicketForm((form) => ({ ...form, priority: (event as { target: HTMLSelectElement }).target.value as ApiPriority }))
+                    }
+                    value={ticketForm.priority}
+                  >
+                    {priorityOptions.map((priority) => (
+                      <JellyOption key={priority} value={priority}>
+                        {formatPriority(priority)}
+                      </JellyOption>
+                    ))}
+                  </JellySelect>
                 </div>
 
                 <div className="field">
                   <label className="label" htmlFor="ticket-column">
                     Column
                   </label>
-                  <div className="select is-fullwidth">
-                    <select
-                      id="ticket-column"
-                      onChange={(event) => setTicketForm((form) => ({ ...form, columnId: event.target.value }))}
-                      required
-                      value={ticketForm.columnId}
-                    >
-                      {columns.map((column) => (
-                        <option key={column.id} value={column.id}>
-                          {column.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <JellySelect
+                    id="ticket-column"
+                    onChange={(event: unknown) => setTicketForm((form) => ({ ...form, columnId: (event as { target: HTMLSelectElement }).target.value }))}
+                    value={ticketForm.columnId}
+                  >
+                    {columns.map((column) => (
+                      <JellyOption key={column.id} value={column.id}>
+                        {column.name}
+                      </JellyOption>
+                    ))}
+                  </JellySelect>
                 </div>
               </div>
             </section>
@@ -1513,35 +1613,31 @@ function App() {
                 <div className="detail-grid">
                   <div>
                     <p className="detail-label">Priority</p>
-                    <div className="select is-fullwidth detail-select">
-                      <select
-                        aria-label="Ticket priority"
-                        onChange={(event) => updateTicketDraft({ priority: event.target.value as ApiPriority })}
-                        value={ticketDraft.priority}
-                      >
-                        {priorityOptions.map((priority) => (
-                          <option key={priority} value={priority}>
-                            {formatPriority(priority)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <JellySelect
+                      aria-label="Ticket priority"
+                      onChange={(event: unknown) => updateTicketDraft({ priority: (event as { target: HTMLSelectElement }).target.value as ApiPriority })}
+                      value={ticketDraft.priority}
+                    >
+                      {priorityOptions.map((priority) => (
+                        <JellyOption key={priority} value={priority}>
+                          {formatPriority(priority)}
+                        </JellyOption>
+                      ))}
+                    </JellySelect>
                   </div>
                   <div>
                     <p className="detail-label">Column</p>
-                    <div className="select is-fullwidth detail-select">
-                      <select
-                        aria-label="Ticket column"
-                        onChange={(event) => updateTicketDraft({ columnId: event.target.value })}
-                        value={ticketDraft.columnId}
-                      >
-                        {columns.map((column) => (
-                          <option key={column.id} value={column.id}>
-                            {column.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <JellySelect
+                      aria-label="Ticket column"
+                      onChange={(event: unknown) => updateTicketDraft({ columnId: (event as { target: HTMLSelectElement }).target.value })}
+                      value={ticketDraft.columnId}
+                    >
+                      {columns.map((column) => (
+                        <JellyOption key={column.id} value={column.id}>
+                          {column.name}
+                        </JellyOption>
+                      ))}
+                    </JellySelect>
                   </div>
                 </div>
 
