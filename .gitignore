@@ -1,1 +1,58 @@
+# OS files
 .DS_Store
+Thumbs.db
+Desktop.ini
+
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
+# Editor / IDE files
+.idea/
+.vscode/
+*.sublime-workspace
+
+# Backup files
+*.bak
+*.orig
+*.rej
+
+# Build output and generated files
+dist/
+build/
+out/
+coverage/
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# macOS metadata
+.AppleDouble
+.LSOverride
+
+# Crash dumps
+*.core
+core
