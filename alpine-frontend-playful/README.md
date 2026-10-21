@@ -1,6 +1,6 @@
 # Alpine Frontend
 
-Alpine is a playful Kanban project-management frontend built with React, TypeScript, and Vite. It connects to an Alpine backend API to provide authentication, workspaces, boards, tickets, team members, labels, comments, and activity updates.
+Alpine is a playful Kanban project-management frontend built with React, TypeScript, and Vite. It is designed to be used with the sibling [`alpine-backend`](../alpine-backend/) project, a Java/Spring Boot API that provides authentication, workspaces, boards, tickets, team members, labels, comments, and activity updates.
 
 ![Alpine Kanban board](./screencapture_sample_playful.png)
 
@@ -26,29 +26,63 @@ Alpine is a playful Kanban project-management frontend built with React, TypeScr
 ## Prerequisites
 
 - Node.js and npm
-- A running Alpine backend API
+- Java 26
+- Docker, for the local PostgreSQL database
 
-The frontend expects the backend at `http://localhost:8080` by default. The API contract for the frontend/backend integration is documented in [`openapi.yaml`](./openapi.yaml).
+The frontend expects the backend at `http://localhost:8080` by default. The frontend API contract is documented in [`openapi.yaml`](./openapi.yaml), and the backend has its own API definition in [`alpine-backend/openapi.yaml`](../alpine-backend/openapi.yaml).
 
-## Getting started
+## Run the backend
 
-1. Install dependencies:
+From the sibling backend directory:
 
-   ```bash
-   npm install
-   ```
+```bash
+cd ../alpine-backend
+docker compose up -d
+./gradlew bootRun
+```
 
-2. Start the Alpine backend on `http://localhost:8080`.
+The first command starts PostgreSQL on `localhost:5432` with the default development database `alpine`. The Spring Boot server then starts on `http://localhost:8080`; Flyway applies the database migrations automatically.
 
-3. Start the frontend development server:
+The backend defaults are:
 
-   ```bash
-   npm run dev
-   ```
+- Database: `jdbc:postgresql://localhost:5432/alpine`
+- Database user/password: `postgres` / `postgres`
+- API port: `8080`
+- JWT secret: a development default; set `JWT_SECRET` to a secure value outside local development
 
-4. Open the URL printed by Vite, usually [http://localhost:5173](http://localhost:5173).
+To stop the database after development:
 
-To use a backend at another URL, create a `.env.local` file in the project root:
+```bash
+cd ../alpine-backend
+docker compose down
+```
+
+## Run the frontend
+
+From this frontend directory:
+
+```bash
+npm install
+npm run dev
+```
+
+Open the URL printed by Vite, usually [http://localhost:5173](http://localhost:5173).
+
+The complete local startup flow is therefore:
+
+```bash
+# Terminal 1: backend and PostgreSQL
+cd ../alpine-backend
+docker compose up -d
+./gradlew bootRun
+
+# Terminal 2: frontend
+cd ../alpine-frontend-playful
+npm install
+npm run dev
+```
+
+To use a backend at another URL, create a `.env.local` file in the frontend project root:
 
 ```bash
 VITE_API_URL=http://localhost:8080
@@ -56,7 +90,7 @@ VITE_API_URL=http://localhost:8080
 
 `VITE_API_URL` is read at build time, so restart Vite after changing it.
 
-## Available commands
+## Frontend commands
 
 | Command | Description |
 | --- | --- |
@@ -64,6 +98,26 @@ VITE_API_URL=http://localhost:8080
 | `npm run build` | Type-check and create a production build in `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | Run ESLint |
+
+## Backend commands
+
+Run these from `../alpine-backend`:
+
+| Command | Description |
+| --- | --- |
+| `docker compose up -d` | Start the PostgreSQL development database |
+| `./gradlew bootRun` | Start the Spring Boot API on port 8080 |
+| `./gradlew test` | Run the backend test suite |
+| `docker compose down` | Stop the PostgreSQL container |
+
+## Getting started details
+
+The frontend setup is:
+
+1. Install dependencies with `npm install`.
+2. Start the backend and PostgreSQL as described above.
+3. Start Vite with `npm run dev`.
+4. Register an account or sign in from the app.
 
 ## Project structure
 
