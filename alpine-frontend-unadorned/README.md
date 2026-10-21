@@ -13,13 +13,50 @@ Alpine is a React and TypeScript frontend for managing workspaces, kanban boards
 
 This repository contains the frontend only. A running Alpine API is required for authentication and application data.
 
+The companion backend lives next to this project at [`../alpine-backend`](../alpine-backend). This frontend is intended to be used with that Spring Boot service, which exposes the API on port `8080` by default.
+
 ## Requirements
 
 - Node.js 18 or newer
 - npm
 - The Alpine backend running locally or at a reachable URL
+- For the local backend: Java 26 and Docker with Docker Compose
 
-## Getting started
+## Run the full Alpine stack locally
+
+Start the backend first. In a terminal, from the backend directory:
+
+```bash
+cd ../alpine-backend
+docker compose up -d
+./gradlew bootRun
+```
+
+The first command starts the PostgreSQL 16 container used by the backend. The second starts the Spring Boot API at `http://localhost:8080`. The backend runs Flyway migrations automatically and uses these local database defaults:
+
+- Database: `alpine`
+- Username: `postgres`
+- Password: `postgres`
+- PostgreSQL port: `5432`
+
+Keep the backend running, then start the frontend in a second terminal:
+
+```bash
+cd ../alpine-frontend-unadorned
+npm install
+npm run dev
+```
+
+Open the Vite URL, normally `http://localhost:5173`, and register or sign in. The frontend defaults to the local backend URL, so no environment file is needed for this setup.
+
+To stop the database container later:
+
+```bash
+cd ../alpine-backend
+docker compose down
+```
+
+## Frontend-only setup
 
 1. Install dependencies:
 
