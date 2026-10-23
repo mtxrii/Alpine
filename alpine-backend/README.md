@@ -4,6 +4,15 @@ Alpine Backend is the Spring Boot API for a WikiForge/Kanban board system. It pr
 
 The service uses PostgreSQL for persistence, Flyway for schema migrations, and stateless JWT bearer tokens for authentication. The complete API contract is available in [`openapi.yaml`](openapi.yaml).
 
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [Authentication and API usage](#authentication-and-api-usage)
+- [Tests](#tests)
+- [Project layout](#project-layout)
+
 ## Requirements
 
 - Java 26 (the Gradle toolchain is configured for Java 26)
@@ -11,31 +20,40 @@ The service uses PostgreSQL for persistence, Flyway for schema migrations, and s
 
 The repository includes the Gradle wrapper, so a separate Gradle installation is not required.
 
-## Run locally
+## Getting Started
 
-1. Start PostgreSQL:
+### 1. Start the Database
 
-   ```bash
-   docker compose up -d postgres
-   ```
-
-2. Start the API:
-
-   ```bash
-   ./gradlew bootRun
-   ```
-
-   On Windows, use `gradlew.bat bootRun`.
-
-The API listens on <http://localhost:8080> by default. Flyway runs the SQL migrations in `src/main/resources/db/migration` automatically when the application starts.
-
-To stop the database container:
+Ensure Docker is running, then start the PostgreSQL instance:
 
 ```bash
-docker compose down
+docker compose up -d postgres
 ```
 
-The database is stored in the `postgres_data` Docker volume. To remove the database and its data as well, run `docker compose down -v`.
+### 2. Start the API
+
+Run the application using the Gradle wrapper:
+
+```bash
+# macOS/Linux
+./gradlew bootRun
+
+# Windows
+gradlew.bat bootRun
+```
+
+The API will be available at [http://localhost:8080](http://localhost:8080).
+
+### Managing the Database
+
+- **Stop the database:**
+  ```bash
+  docker compose down
+  ```
+- **Remove database and data:**
+  ```bash
+  docker compose down -v
+  ```
 
 ## Configuration
 
@@ -48,13 +66,12 @@ The default local configuration connects to the PostgreSQL instance created by `
 | `DATABASE_PASSWORD` | `postgres` | Database password |
 | `PORT` | `8080` | HTTP port |
 | `JWT_ISSUER` | `alpine-backend` | JWT issuer claim |
-| `JWT_SECRET` | development placeholder | HMAC signing secret; must be at least 32 bytes |
-| `JWT_ACCESS_TOKEN_TTL` | `PT2H` | Access-token lifetime, using ISO-8601 duration syntax |
+| `JWT_SECRET` | development placeholder | HMAC signing secret (must be ≥ 32 bytes) |
+| `JWT_ACCESS_TOKEN_TTL` | `PT2H` | Access-token lifetime (ISO-8601) |
 
-For anything other than local development, set a strong `JWT_SECRET` and provide database credentials through the environment rather than using the defaults.
+For non-development environments, always provide a strong `JWT_SECRET` and secure database credentials.
 
-Example:
-
+Example with custom secret:
 ```bash
 JWT_SECRET='replace-with-a-secret-at-least-32-bytes-long' ./gradlew bootRun
 ```
@@ -67,23 +84,23 @@ Registration and login are public:
 - `POST /auth/login`
 - `POST /auth/logout`
 
-All other application endpoints require an access token in the request header:
+All other endpoints require an access token in the request header:
 
 ```text
 Authorization: Bearer <access-token>
 ```
 
-See [`openapi.yaml`](openapi.yaml) for request bodies, response schemas, and the full endpoint list.
+See [`openapi.yaml`](openapi.yaml) for full API details.
 
 ## Tests
 
-Run the test suite with:
+Run the test suite:
 
 ```bash
 ./gradlew test
 ```
 
-The integration test uses Testcontainers and starts a PostgreSQL 16 container, so Docker must be available when running the full suite.
+*Note: Integration tests use Testcontainers and require Docker.*
 
 ## Project layout
 
